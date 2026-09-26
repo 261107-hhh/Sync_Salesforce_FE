@@ -1,8 +1,25 @@
 import React, { useState, useEffect } from 'react';
+import { useAuth } from '../context/AuthContext';
 import api from '../api/client';
-import { Search, Plus, Eye, ChevronLeft, ChevronRight, UserCheck, RefreshCw } from 'lucide-react';
+import {
+  Search,
+  Plus,
+  Eye,
+  ChevronLeft,
+  ChevronRight,
+  UserCheck,
+  RefreshCw,
+  Download,
+  FileSpreadsheet,
+  FileCode,
+  Building2,
+  Lock
+} from 'lucide-react';
 
 export default function DataExplorer({ onOpenDetails, onOpenCreate, sfStatus }) {
+  const { activeOrgId, activeOrgName, activeOrgRole } = useAuth();
+  const isReadOnly = activeOrgRole === 'READONLY';
+
   const [activeTable, setActiveTable] = useState('Account');
   const [tableCounts, setTableCounts] = useState([]);
   const [records, setRecords] = useState([]);
@@ -12,20 +29,21 @@ export default function DataExplorer({ onOpenDetails, onOpenCreate, sfStatus }) 
   const [totalPages, setTotalPages] = useState(1);
   const [totalRecords, setTotalRecords] = useState(0);
   const [loading, setLoading] = useState(false);
+  const [exporting, setExporting] = useState(false);
 
   useEffect(() => {
     fetchTableCounts();
-  }, []);
+  }, [activeOrgId]);
 
   useEffect(() => {
     fetchRecords();
-  }, [activeTable, page, search]);
+  }, [activeTable, page, search, activeOrgId]);
 
   const fetchTableCounts = async () => {
     try {
       const res = await api.get('/api/data/tables');
       if (res.data.success) {
-        setTableCounts(res.data.data);
+        setTableCounts(res.data.data || []);
       }
     } catch (err) {
       console.warn('Could not fetch tables summary');
@@ -38,7 +56,7 @@ export default function DataExplorer({ onOpenDetails, onOpenCreate, sfStatus }) 
       const res = await api.get(`/api/data/${activeTable}`, {
         params: { page, limit: 15, search }
       });
-      if (res.data.success) {
+      if (res.data.success && res.data.data) {
         setRecords(res.data.data.records || []);
         setColumns(res.data.data.columns || []);
         setTotalPages(res.data.data.totalPages || 1);
@@ -51,7 +69,34 @@ export default function DataExplorer({ onOpenDetails, onOpenCreate, sfStatus }) 
     }
   };
 
-  const isLive = sfStatus?.connected && !sfStatus?.isMock;
+  const handleExport = async (format = 'csv') => {
+    setExporting(true);
+    try {
+      const res = await api.get(`/api/export/${activeTable}`, {
+        params: { format },
+        responseType: 'blob'
+      });
+
+      // Trigger browser download
+      const blob = new Blob([res.data], {
+        type: format === 'csv' ? 'text/csv;charset=utf-8;' : 'application/json'
+      });
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', `${activeTable}_${activeOrgName || 'export'}.${format}`);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+    } catch (err) {
+      alert('Failed to export records: ' + (err.message || 'Unknown error'));
+    } finally {
+      setExporting(false);
+    }
+  };
+
+  const isLive = sfStatus?.connected;
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
@@ -95,14 +140,14 @@ export default function DataExplorer({ onOpenDetails, onOpenCreate, sfStatus }) 
           </div>
 
           {/* Action Row */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', flexWrap: 'wrap' }}>
             {/* Search Input */}
             <div style={{ position: 'relative' }}>
               <input
                 type="text"
                 placeholder={`Search ${activeTable}...`}
                 className="form-input"
-                style={{ paddingLeft: '2.2rem', width: 240, padding: '0.45rem 0.85rem 0.45rem 2.2rem', fontSize: '0.82rem' }}
+                style={{ paddingLeft: '2.2rem', width: 220, padding: '0.45rem 0.85rem 0.45rem 2.2rem', fontSize: '0.82rem' }}
                 value={search}
                 onChange={(e) => { setSearch(e.target.value); setPage(1); }}
               />
@@ -115,19 +160,49 @@ export default function DataExplorer({ onOpenDetails, onOpenCreate, sfStatus }) 
               className="btn btn-secondary btn-sm"
               title="Refresh table"
             >
-              <RefreshCw size={14} />
+              <RefreshCw size={14} className={loading ? 'spin' : ''} />
+            </button>
+
+            {/* Export CSV */}
+            <button
+              onClick={() => handleExport('csv')}
+              disabled={exporting}
+              className="btn btn-secondary btn-sm"
+              title="Export records as CSV"
+            >
+              <FileSpreadsheet size={14} />
+              CSV
+            </button>
+
+            {/* Export JSON */}
+            <button
+              onClick={() => handleExport('json')}
+              disabled={exporting}
+              className="btn btn-secondary btn-sm"
+              title="Export records as JSON"
+            >
+              <FileCode size={14} />
+              JSON
             </button>
 
             {/* New Record Button */}
-            <button
-              onClick={() => onOpenCreate(activeTable)}
-              disabled={!isLive}
-              className="btn btn-accent btn-sm"
-              title={isLive ? 'Create record in Salesforce' : 'Connect live Salesforce to create records'}
-            >
-              <Plus size={15} />
-              New {activeTable}
-            </button>
+            {!isReadOnly && (
+              <button
+                onClick={() => onOpenCreate(activeTable)}
+                disabled={!isLive}
+                className="btn btn-accent btn-sm"
+                title={isLive ? 'Create record in Salesforce & Local Database' : 'Connect Salesforce to create records'}
+              >
+                <Plus size={15} />
+                New {activeTable}
+              </button>
+            )}
+
+            {isReadOnly && (
+              <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', display: 'inline-flex', alignItems: 'center', gap: '0.35rem' }}>
+                <Lock size={13} /> Read-only
+              </span>
+            )}
           </div>
         </div>
       </div>
@@ -149,98 +224,106 @@ export default function DataExplorer({ onOpenDetails, onOpenCreate, sfStatus }) 
             </thead>
             <tbody>
               {loading ? (
-                <tr><td colSpan={columns.length + 2} style={{ textAlign: 'center', padding: '2.5rem', color: 'var(--text-muted)' }}>Loading records...</td></tr>
+                <tr>
+                  <td colSpan={columns.length + (activeTable === 'Account' ? 2 : 1)} style={{ textAlign: 'center', padding: '2.5rem', color: 'var(--text-muted)' }}>
+                    Loading records from {activeOrgName}...
+                  </td>
+                </tr>
               ) : records.length === 0 ? (
-                <tr><td colSpan={columns.length + 2} style={{ textAlign: 'center', padding: '2.5rem', color: 'var(--text-muted)' }}>No records match your criteria.</td></tr>
+                <tr>
+                  <td colSpan={columns.length + (activeTable === 'Account' ? 2 : 1)} style={{ textAlign: 'center', padding: '2.5rem', color: 'var(--text-muted)' }}>
+                    No records match your criteria in workspace <strong>{activeOrgName || activeOrgId}</strong>.
+                  </td>
+                </tr>
               ) : (
                 records.map((row, idx) => {
-                const rowId = row.Id || row.id || row.ID || idx;
-                const getVal = (col) => {
-                  if (row[col] !== undefined && row[col] !== null) return row[col];
-                  const matchKey = Object.keys(row).find((k) => k.toLowerCase() === col.toLowerCase());
-                  return matchKey ? row[matchKey] : null;
-                };
+                  const rowId = row.Id || row.id || row.ID || idx;
+                  const getVal = (col) => {
+                    if (row[col] !== undefined && row[col] !== null) return row[col];
+                    const matchKey = Object.keys(row).find((k) => k.toLowerCase() === col.toLowerCase());
+                    return matchKey ? row[matchKey] : null;
+                  };
 
-                const accountId = row.AccountId || row.accountid || row.accountId;
-                const accountName = row.Account_Name || row.account_name || row.AccountName;
-                const createdBy = getVal('custom_app_created_by');
+                  const accountId = row.AccountId || row.accountid || row.accountId;
+                  const accountName = row.Account_Name || row.account_name || row.AccountName;
+                  const createdBy = getVal('custom_app_created_by');
 
-                return (
-                  <tr key={rowId}>
-                    {columns.map((col) => {
-                      const val = getVal(col);
+                  return (
+                    <tr key={rowId}>
+                      {columns.map((col) => {
+                        const val = getVal(col);
 
-                      if (col.toLowerCase() === 'id') {
-                        return <td key={col} style={{ fontFamily: 'var(--font-mono)', fontSize: '0.8rem', color: '#38bdf8' }}>{val || rowId}</td>;
-                      }
+                        if (col.toLowerCase() === 'id') {
+                          return <td key={col} style={{ fontFamily: 'var(--font-mono)', fontSize: '0.8rem', color: '#38bdf8' }}>{val || rowId}</td>;
+                        }
 
-                      if (col === 'Account_Name' || col.toLowerCase() === 'accountid') {
-                        return (
-                          <td key={col}>
-                            {accountId ? (
-                              <span
-                                className="account-pill"
-                                onClick={() => onOpenDetails('Account', accountId)}
-                                title="Click to view Account"
-                              >
-                                🏢 {accountName || accountId}
-                              </span>
-                            ) : (
-                              <span style={{ color: 'var(--text-muted)' }}>-</span>
-                            )}
-                          </td>
-                        );
-                      }
+                        if (col === 'Account_Name' || col.toLowerCase() === 'accountid') {
+                          return (
+                            <td key={col}>
+                              {accountId ? (
+                                <span
+                                  className="account-pill"
+                                  onClick={() => onOpenDetails('Account', accountId)}
+                                  title="Click to view Account"
+                                >
+                                  🏢 {accountName || accountId}
+                                </span>
+                              ) : (
+                                <span style={{ color: 'var(--text-muted)' }}>-</span>
+                              )}
+                            </td>
+                          );
+                        }
 
-                      if (col === 'custom_app_created_by') {
-                        return (
-                          <td key={col}>
-                            {createdBy ? (
-                              <span className="creator-badge" title="Created by user in Custom App">
-                                <UserCheck size={12} /> {createdBy}
-                              </span>
-                            ) : (
-                              <span style={{ color: 'var(--text-muted)', fontSize: '0.78rem' }}>SF Sync</span>
-                            )}
-                          </td>
-                        );
-                      }
+                        if (col === 'custom_app_created_by') {
+                          return (
+                            <td key={col}>
+                              {createdBy ? (
+                                <span className="creator-badge" title="Created by user in Custom App">
+                                  <UserCheck size={12} /> {createdBy}
+                                </span>
+                              ) : (
+                                <span style={{ color: 'var(--text-muted)', fontSize: '0.78rem' }}>SF Sync</span>
+                              )}
+                            </td>
+                          );
+                        }
 
-                      return <td key={col}>{val !== null && val !== undefined ? String(val) : '-'}</td>;
-                    })}
+                        return <td key={col}>{val !== null && val !== undefined ? String(val) : '-'}</td>;
+                      })}
 
-                    {/* Account Specific Related Pills */}
-                    {activeTable === 'Account' && (
-                      <td>
-                        <span
-                          className="account-pill"
-                          style={{ marginRight: 6, fontSize: '0.75rem', padding: '0.15rem 0.5rem' }}
-                          onClick={() => onOpenDetails('Account', rowId)}
+                      {/* Account Specific Related Pills */}
+                      {activeTable === 'Account' && (
+                        <td>
+                          <span
+                            className="account-pill"
+                            style={{ marginRight: 6, fontSize: '0.75rem', padding: '0.15rem 0.5rem' }}
+                            onClick={() => onOpenDetails('Account', rowId)}
+                          >
+                            👥 {row._contact_count || 0} Contacts
+                          </span>
+                          <span
+                            className="account-pill"
+                            style={{ fontSize: '0.75rem', padding: '0.15rem 0.5rem' }}
+                            onClick={() => onOpenDetails('Account', rowId)}
+                          >
+                            💼 {row._opportunity_count || 0} Deals
+                          </span>
+                        </td>
+                      )}
+
+                      <td style={{ textAlign: 'right' }}>
+                        <button
+                          onClick={() => onOpenDetails(activeTable, rowId)}
+                          className="btn btn-secondary btn-sm"
                         >
-                          👥 {row._contact_count || 0} Contacts
-                        </span>
-                        <span
-                          className="account-pill"
-                          style={{ fontSize: '0.75rem', padding: '0.15rem 0.5rem' }}
-                          onClick={() => onOpenDetails('Account', rowId)}
-                        >
-                          💼 {row._opportunity_count || 0} Deals
-                        </span>
+                          <Eye size={13} />
+                          Details
+                        </button>
                       </td>
-                    )}
-
-                    <td style={{ textAlign: 'right' }}>
-                      <button
-                        onClick={() => onOpenDetails(activeTable, rowId)}
-                        className="btn btn-secondary btn-sm"
-                      >
-                        <Eye size={13} />
-                        View Details
-                      </button>
-                    </td>
-                  </tr>
-                );
-              })
+                    </tr>
+                  );
+                })
               )}
             </tbody>
           </table>
@@ -258,7 +341,7 @@ export default function DataExplorer({ onOpenDetails, onOpenCreate, sfStatus }) 
           color: 'var(--text-secondary)'
         }}>
           <div>
-            Showing {records.length} of {totalRecords} records
+            Showing {records.length} of {totalRecords} records in <strong>{activeOrgName || activeOrgId}</strong>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
             <button

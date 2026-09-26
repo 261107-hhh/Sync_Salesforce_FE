@@ -5,15 +5,24 @@ import LoginModal from './components/LoginModal';
 import SyncCenter from './components/SyncCenter';
 import DataExplorer from './components/DataExplorer';
 import ConnectionTab from './components/ConnectionTab';
+import TeamManagement from './components/TeamManagement';
 import CreateRecordModal from './components/CreateRecordModal';
 import RecordDetailModal from './components/RecordDetailModal';
+import CreateOrgModal from './components/CreateOrgModal';
+import AcceptInviteModal from './components/AcceptInviteModal';
 import ErrorBoundary from './components/ErrorBoundary';
 import api from './api/client';
 
 function MainApp() {
-  const { user, loading } = useAuth();
+  const { user, loading, activeOrgId, activeOrgName, activeOrgRole } = useAuth();
   const [activeTab, setActiveTab] = useState('explorer');
   const [sfStatus, setSfStatus] = useState(null);
+
+  // Invite acceptance flow from URL query params
+  const [inviteToken, setInviteToken] = useState(() => {
+    const params = new URLSearchParams(window.location.search);
+    return params.get('token') || params.get('inviteToken') || null;
+  });
 
   // Modal states
   const [createModalOpen, setCreateModalOpen] = useState(false);
@@ -24,20 +33,50 @@ function MainApp() {
   const [detailTargetObject, setDetailTargetObject] = useState('Account');
   const [detailTargetId, setDetailTargetId] = useState(null);
 
+  const [createOrgModalOpen, setCreateOrgModalOpen] = useState(false);
+
   useEffect(() => {
-    if (user) {
+    if (user && activeOrgId) {
       fetchSfStatus();
     }
-  }, [user]);
+  }, [user, activeOrgId]);
 
-  const fetchSfStatus = async () => {
+  const fetchSfStatus = async (overrideStatus = null) => {
+    if (overrideStatus !== null && typeof overrideStatus === 'object') {
+      setSfStatus(overrideStatus);
+      return;
+    }
+
     try {
+      if (activeOrgId) {
+        // Multi-tenant check: Fetch active organization connection profile
+        try {
+          const orgRes = await api.get(`/api/orgs/${activeOrgId}`);
+          if (orgRes.data.success && orgRes.data.data) {
+            const org = orgRes.data.data;
+            const isConnected = Boolean(org.salesforceConnected) && org.sfAuthMode !== 'disconnected';
+            setSfStatus({
+              connected: isConnected,
+              isMock: org.sfAuthMode === 'mock',
+              mode: org.sfAuthMode || (isConnected ? 'eca' : 'disconnected'),
+              instanceUrl: org.sfInstanceUrl,
+              username: org.sfUsername,
+              organizationId: org.id,
+              organizationName: org.name
+            });
+            return;
+          }
+        } catch (orgErr) {
+          console.warn('Could not query organization status, falling back to auth status:', orgErr);
+        }
+      }
+
       const res = await api.get('/api/auth/status');
       if (res.data.success) {
         setSfStatus(res.data.data);
       }
     } catch (err) {
-      console.warn('Could not fetch Salesforce status');
+      console.warn('Could not fetch Salesforce status', err);
     }
   };
 
@@ -66,16 +105,37 @@ function MainApp() {
     );
   }
 
+  // If user opened an invitation link, render Accept Invite Screen
+  if (inviteToken) {
+    return (
+      <AcceptInviteModal
+        token={inviteToken}
+        onJoined={() => {
+          setInviteToken(null);
+          window.history.replaceState({}, document.title, window.location.pathname);
+        }}
+        onCancel={() => {
+          setInviteToken(null);
+          window.history.replaceState({}, document.title, window.location.pathname);
+        }}
+      />
+    );
+  }
+
   if (!user) {
     return <LoginModal />;
   }
 
   return (
     <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
-      <Navbar activeTab={activeTab} setActiveTab={setActiveTab} sfStatus={sfStatus} />
+      <Navbar
+        activeTab={activeTab}
+        setActiveTab={setActiveTab}
+        sfStatus={sfStatus}
+        onOpenCreateOrg={() => setCreateOrgModalOpen(true)}
+      />
 
       <main style={{ flex: 1, maxWidth: 1300, width: '100%', margin: '0 auto', padding: '1.5rem' }}>
-        {activeTab === 'sync' && <SyncCenter />}
         {activeTab === 'explorer' && (
           <DataExplorer
             onOpenDetails={handleOpenDetails}
@@ -83,6 +143,13 @@ function MainApp() {
             sfStatus={sfStatus}
           />
         )}
+        {activeTab === 'sync' && (
+          <SyncCenter
+            sfStatus={sfStatus}
+            onNavigateToConnection={() => setActiveTab('connection')}
+          />
+        )}
+        {activeTab === 'team' && <TeamManagement />}
         {activeTab === 'connection' && (
           <ConnectionTab sfStatus={sfStatus} onStatusChange={fetchSfStatus} />
         )}
@@ -95,7 +162,7 @@ function MainApp() {
         initialObject={createTargetObject}
         prefillAccountId={prefillAccountId}
         onCreated={() => {
-          // Trigger refresh if needed
+          // Triggers refresh in DataExplorer
         }}
       />
 
@@ -106,6 +173,12 @@ function MainApp() {
         objectName={detailTargetObject}
         recordId={detailTargetId}
         onOpenCreateWithAccount={handleAddChildFromAccount}
+      />
+
+      {/* Create Organization Modal */}
+      <CreateOrgModal
+        isOpen={createOrgModalOpen}
+        onClose={() => setCreateOrgModalOpen(false)}
       />
     </div>
   );

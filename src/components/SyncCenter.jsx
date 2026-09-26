@@ -1,8 +1,12 @@
 import React, { useState, useEffect } from 'react';
+import { useAuth } from '../context/AuthContext';
 import api from '../api/client';
-import { RefreshCw, CheckSquare, Square, Filter, ChevronDown, ChevronUp, Terminal, Clock, Play } from 'lucide-react';
+import { RefreshCw, CheckSquare, Square, Filter, ChevronDown, ChevronUp, Terminal, Clock, Play, Lock, Building2, AlertCircle } from 'lucide-react';
 
-export default function SyncCenter() {
+export default function SyncCenter({ sfStatus, onNavigateToConnection }) {
+  const { activeOrgId, activeOrgName, activeOrgRole } = useAuth();
+  const isReadOnly = activeOrgRole === 'READONLY';
+
   const [selectedObjects, setSelectedObjects] = useState(['Account', 'Contact', 'Opportunity', 'Lead']);
   const [syncMode, setSyncMode] = useState('incremental');
   const [showFilters, setShowFilters] = useState(false);
@@ -72,6 +76,40 @@ export default function SyncCenter() {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+      {/* Disconnected Warning Notice */}
+      {sfStatus && !sfStatus.connected && (
+        <div style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          flexWrap: 'wrap',
+          gap: '1rem',
+          padding: '1rem 1.25rem',
+          borderRadius: 'var(--radius-md)',
+          background: 'rgba(248, 113, 113, 0.08)',
+          border: '1px solid rgba(248, 113, 113, 0.3)',
+          color: '#f87171',
+          fontSize: '0.85rem'
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+            <AlertCircle size={20} />
+            <div>
+              <strong style={{ color: '#fff' }}>Salesforce is currently disconnected for this workspace. </strong>
+              <span>Sync jobs cannot run until Salesforce credentials or Mock Sandbox is configured.</span>
+            </div>
+          </div>
+          {onNavigateToConnection && (
+            <button
+              onClick={onNavigateToConnection}
+              className="btn btn-secondary btn-sm"
+              style={{ borderColor: 'rgba(248, 113, 113, 0.4)', color: '#fff' }}
+            >
+              Configure Connection
+            </button>
+          )}
+        </div>
+      )}
+
       {/* Top Grid: Controls + Live Progress */}
       <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr', gap: '1.5rem' }}>
         
@@ -185,15 +223,41 @@ export default function SyncCenter() {
           </div>
 
           {/* Trigger Button */}
-          <button
-            onClick={handleStartSync}
-            disabled={isRunning || selectedObjects.length === 0 || loading}
-            className="btn btn-primary"
-            style={{ width: '100%', padding: '0.75rem' }}
-          >
-            <Play size={16} />
-            {isRunning ? 'Syncing in background...' : 'Start Synchronization Now'}
-          </button>
+          {isReadOnly ? (
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.5rem',
+              padding: '0.75rem',
+              borderRadius: 'var(--radius-md)',
+              background: 'rgba(255, 255, 255, 0.04)',
+              border: '1px solid var(--border-color)',
+              color: 'var(--text-muted)',
+              fontSize: '0.82rem',
+              justifyContent: 'center'
+            }}>
+              <Lock size={15} />
+              <span>Sync execution requires Member or Admin privileges in this organization.</span>
+            </div>
+          ) : (
+            <button
+              onClick={handleStartSync}
+              disabled={isRunning || selectedObjects.length === 0 || loading || (sfStatus && !sfStatus.connected)}
+              className={`btn ${sfStatus && !sfStatus.connected ? 'btn-secondary' : 'btn-primary'}`}
+              style={{
+                width: '100%',
+                padding: '0.75rem',
+                opacity: (sfStatus && !sfStatus.connected) ? 0.6 : 1,
+                cursor: (sfStatus && !sfStatus.connected) ? 'not-allowed' : 'pointer'
+              }}
+              title={sfStatus && !sfStatus.connected ? 'Salesforce is disconnected. Connect in Settings first.' : ''}
+            >
+              <Play size={16} />
+              {sfStatus && !sfStatus.connected
+                ? 'Salesforce Disconnected — Sync Disabled'
+                : (isRunning ? 'Syncing in background...' : 'Start Synchronization Now')}
+            </button>
+          )}
         </div>
 
         {/* Live Status & Progress Card */}
