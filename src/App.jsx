@@ -3,13 +3,15 @@ import { AuthProvider, useAuth } from './context/AuthContext';
 import Navbar from './components/Navbar';
 import LoginModal from './components/LoginModal';
 import SyncCenter from './components/SyncCenter';
+import SyncLogsTab from './components/SyncLogsTab';
 import DataExplorer from './components/DataExplorer';
-import ConnectionTab from './components/ConnectionTab';
-import TeamManagement from './components/TeamManagement';
+import UserAccountTab from './components/UserAccountTab';
 import CreateRecordModal from './components/CreateRecordModal';
+import EditRecordModal from './components/EditRecordModal';
 import RecordDetailModal from './components/RecordDetailModal';
 import CreateOrgModal from './components/CreateOrgModal';
 import AcceptInviteModal from './components/AcceptInviteModal';
+import ApiErrorHighlight from './components/ApiErrorHighlight';
 import ErrorBoundary from './components/ErrorBoundary';
 import api from './api/client';
 
@@ -29,11 +31,16 @@ function MainApp() {
   const [createTargetObject, setCreateTargetObject] = useState('Contact');
   const [prefillAccountId, setPrefillAccountId] = useState(null);
 
+  const [editModalOpen, setEditModalOpen] = useState(false);
+  const [editTargetObject, setEditTargetObject] = useState('Account');
+  const [editTargetRecord, setEditTargetRecord] = useState(null);
+
   const [detailModalOpen, setDetailModalOpen] = useState(false);
   const [detailTargetObject, setDetailTargetObject] = useState('Account');
   const [detailTargetId, setDetailTargetId] = useState(null);
 
   const [createOrgModalOpen, setCreateOrgModalOpen] = useState(false);
+  const [dataRefreshKey, setDataRefreshKey] = useState(0);
 
   useEffect(() => {
     if (user && activeOrgId) {
@@ -86,6 +93,12 @@ function MainApp() {
     setCreateModalOpen(true);
   };
 
+  const handleOpenEdit = (objectName, record) => {
+    setEditTargetObject(objectName);
+    setEditTargetRecord(record);
+    setEditModalOpen(true);
+  };
+
   const handleOpenDetails = (objectName, id) => {
     setDetailTargetObject(objectName);
     setDetailTargetId(id);
@@ -95,6 +108,10 @@ function MainApp() {
   const handleAddChildFromAccount = (childObject, accountId) => {
     setDetailModalOpen(false);
     handleOpenCreate(childObject, accountId);
+  };
+
+  const triggerDataRefresh = () => {
+    setDataRefreshKey((k) => k + 1);
   };
 
   if (loading) {
@@ -128,51 +145,86 @@ function MainApp() {
 
   return (
     <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
+      {/* Global Highlighting Toast for API Errors */}
+      <ApiErrorHighlight />
+
       <Navbar
         activeTab={activeTab}
         setActiveTab={setActiveTab}
         sfStatus={sfStatus}
-        onOpenCreateOrg={() => setCreateOrgModalOpen(true)}
       />
 
       <main style={{ flex: 1, maxWidth: 1300, width: '100%', margin: '0 auto', padding: '1.5rem' }}>
         {activeTab === 'explorer' && (
           <DataExplorer
+            refreshSignal={dataRefreshKey}
             onOpenDetails={handleOpenDetails}
             onOpenCreate={handleOpenCreate}
+            onOpenEdit={handleOpenEdit}
             sfStatus={sfStatus}
           />
         )}
+
         {activeTab === 'sync' && (
           <SyncCenter
             sfStatus={sfStatus}
-            onNavigateToConnection={() => setActiveTab('connection')}
+            onNavigateToConnection={() => setActiveTab('account')}
+            onNavigateToLogs={() => setActiveTab('sync-logs')}
           />
         )}
-        {activeTab === 'team' && <TeamManagement />}
-        {activeTab === 'connection' && (
-          <ConnectionTab sfStatus={sfStatus} onStatusChange={fetchSfStatus} />
+
+        {activeTab === 'sync-logs' && (
+          <SyncLogsTab
+            sfStatus={sfStatus}
+            onNavigateToConnection={() => setActiveTab('account')}
+            onTriggerSync={() => setActiveTab('sync')}
+          />
+        )}
+
+        {/* User Account Master Tab (Workspaces, Team, SF Setup, Profile) */}
+        {activeTab === 'account' && (
+          <UserAccountTab
+            sfStatus={sfStatus}
+            onStatusChange={fetchSfStatus}
+            onOpenCreateOrg={() => setCreateOrgModalOpen(true)}
+          />
         )}
       </main>
 
-      {/* Create Record Modal with Account Lookup */}
+      {/* Create Record Modal with Account Lookup & Quick Account Creation */}
       <CreateRecordModal
         isOpen={createModalOpen}
         onClose={() => setCreateModalOpen(false)}
         initialObject={createTargetObject}
         prefillAccountId={prefillAccountId}
         onCreated={() => {
-          // Triggers refresh in DataExplorer
+          triggerDataRefresh();
         }}
       />
 
-      {/* Record Details Modal with Relationships */}
+      {/* Edit Record Modal with Live SF Patch & Audit Updates */}
+      <EditRecordModal
+        isOpen={editModalOpen}
+        onClose={() => {
+          setEditModalOpen(false);
+          setEditTargetRecord(null);
+        }}
+        objectName={editTargetObject}
+        record={editTargetRecord}
+        onUpdated={() => {
+          triggerDataRefresh();
+        }}
+      />
+
+      {/* Record Details Modal with Relationships & Edit Action */}
       <RecordDetailModal
         isOpen={detailModalOpen}
         onClose={() => setDetailModalOpen(false)}
         objectName={detailTargetObject}
         recordId={detailTargetId}
         onOpenCreateWithAccount={handleAddChildFromAccount}
+        onEditRecord={handleOpenEdit}
+        onOpenRecordDetails={handleOpenDetails}
       />
 
       {/* Create Organization Modal */}

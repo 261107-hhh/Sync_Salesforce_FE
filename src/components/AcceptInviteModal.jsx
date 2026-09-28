@@ -174,6 +174,7 @@ export default function AcceptInviteModal({ token, onJoined, onCancel }) {
                     className="form-input"
                     style={{ paddingLeft: '2.4rem' }}
                     value={password}
+                    autoComplete="new-password"
                     onChange={(e) => setPassword(e.target.value)}
                   />
                   <Lock size={16} color="var(--text-muted)" style={{ position: 'absolute', left: '0.85rem', top: '50%', transform: 'translateY(-50%)' }} />

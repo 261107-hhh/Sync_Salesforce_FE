@@ -4,7 +4,7 @@ import { Lock, Mail, User, Building2, AlertCircle, ArrowRight, ShieldCheck } fro
 
 export default function LoginModal() {
   const { login, register, registerOrg } = useAuth();
-  
+
   // Modes: 'login' | 'org_register' | 'user_register'
   const [authMode, setAuthMode] = useState('login');
 
@@ -161,6 +161,7 @@ export default function LoginModal() {
                     className="form-input"
                     style={{ paddingLeft: '2.4rem' }}
                     value={orgName}
+                    autoComplete="off"
                     onChange={handleOrgNameChange}
                   />
                   <Building2 size={16} color="var(--text-muted)" style={{ position: 'absolute', left: '0.85rem', top: '50%', transform: 'translateY(-50%)' }} />
@@ -175,6 +176,7 @@ export default function LoginModal() {
                   placeholder="e.g. acme-health"
                   className="form-input"
                   value={slug}
+                  autoComplete="off"
                   onChange={(e) => setSlug(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ''))}
                 />
               </div>
@@ -195,6 +197,7 @@ export default function LoginModal() {
                   className="form-input"
                   style={{ paddingLeft: '2.4rem' }}
                   value={name}
+                  autoComplete="off"
                   onChange={(e) => setName(e.target.value)}
                 />
                 <User size={16} color="var(--text-muted)" style={{ position: 'absolute', left: '0.85rem', top: '50%', transform: 'translateY(-50%)' }} />

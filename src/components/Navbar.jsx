@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React from 'react';
 import { useAuth } from '../context/AuthContext';
 import {
   Cloud,
@@ -6,48 +6,18 @@ import {
   RefreshCw,
   LogOut,
   User,
-  Link as LinkIcon,
   Building2,
-  ChevronDown,
-  Check,
-  Plus,
-  Users,
-  Shield
+  FileText
 } from 'lucide-react';
 
-export default function Navbar({ activeTab, setActiveTab, sfStatus, onOpenCreateOrg }) {
+export default function Navbar({ activeTab, setActiveTab, sfStatus }) {
   const {
     user,
     logout,
     activeOrgId,
     activeOrgName,
-    activeOrgRole,
-    organizations,
-    switchOrg
+    activeOrgRole
   } = useAuth();
-
-  const [orgDropdownOpen, setOrgDropdownOpen] = useState(false);
-  const dropdownRef = useRef(null);
-
-  // Close dropdown on outside click
-  useEffect(() => {
-    const handleClickOutside = (e) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(e.target)) {
-        setOrgDropdownOpen(false);
-      }
-    };
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
-
-  const handleSelectOrg = async (orgId) => {
-    if (orgId === activeOrgId) {
-      setOrgDropdownOpen(false);
-      return;
-    }
-    setOrgDropdownOpen(false);
-    await switchOrg(orgId);
-  };
 
   const getRoleBadge = (role) => {
     switch (role) {
@@ -82,9 +52,13 @@ export default function Navbar({ activeTab, setActiveTab, sfStatus, onOpenCreate
         justifyContent: 'space-between',
         gap: '1rem'
       }}>
-        {/* Left: Brand + Active Organization Dropdown */}
+        {/* Left: Brand + Active Workspace Indicator */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '1.25rem' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+          <div
+            onClick={() => setActiveTab('explorer')}
+            style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', cursor: 'pointer' }}
+            title="Go to Data Explorer"
+          >
             <div style={{
               width: 36,
               height: 36,
@@ -107,131 +81,32 @@ export default function Navbar({ activeTab, setActiveTab, sfStatus, onOpenCreate
             </div>
           </div>
 
-          {/* Org Switcher Dropdown */}
-          <div style={{ position: 'relative' }} ref={dropdownRef}>
-            <button
-              type="button"
-              onClick={() => setOrgDropdownOpen(!orgDropdownOpen)}
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '0.6rem',
-                padding: '0.4rem 0.75rem',
-                background: 'rgba(255, 255, 255, 0.05)',
-                border: '1px solid var(--border-color)',
-                borderRadius: 'var(--radius-md)',
-                color: '#fff',
-                fontSize: '0.82rem',
-                cursor: 'pointer',
-                transition: 'all 0.15s ease'
-              }}
-              title="Click to switch active organization"
-            >
-              <Building2 size={15} color="#38bdf8" />
-              <span style={{ fontWeight: 600, maxWidth: 160, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                {activeOrgName || activeOrgId || 'Default Organization'}
-              </span>
-
-              {/* Role Badge */}
-              <span style={{
-                fontSize: '0.68rem',
-                fontWeight: 700,
-                color: roleStyle.color,
-                background: roleStyle.bg,
-                border: `1px solid ${roleStyle.border}`,
-                padding: '1px 6px',
-                borderRadius: 6
-              }}>
-                {roleStyle.label}
-              </span>
-
-              <ChevronDown size={14} color="var(--text-muted)" style={{ transform: orgDropdownOpen ? 'rotate(180deg)' : 'none', transition: 'transform 0.15s' }} />
-            </button>
-
-            {/* Dropdown Menu */}
-            {orgDropdownOpen && (
-              <div style={{
-                position: 'absolute',
-                top: 'calc(100% + 6px)',
-                left: 0,
-                width: 280,
-                background: '#0b1329',
-                border: '1px solid var(--border-color)',
-                borderRadius: 'var(--radius-md)',
-                boxShadow: '0 10px 30px rgba(0, 0, 0, 0.5)',
-                padding: '0.4rem',
-                zIndex: 200
-              }}>
-                <div style={{ padding: '0.4rem 0.6rem 0.5rem', borderBottom: '1px solid var(--border-subtle)', fontSize: '0.72rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-                  Your Workspaces ({organizations.length})
-                </div>
-
-                <div style={{ maxHeight: 220, overflowY: 'auto', padding: '0.25rem 0' }}>
-                  {organizations.map((org) => {
-                    const isSelected = org.id === activeOrgId;
-                    return (
-                      <div
-                        key={org.id}
-                        onClick={() => handleSelectOrg(org.id)}
-                        style={{
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'space-between',
-                          padding: '0.5rem 0.65rem',
-                          borderRadius: 'var(--radius-sm)',
-                          background: isSelected ? 'rgba(56, 189, 248, 0.12)' : 'transparent',
-                          color: isSelected ? '#38bdf8' : 'var(--text-primary)',
-                          cursor: 'pointer',
-                          fontSize: '0.82rem',
-                          transition: 'background 0.1s'
-                        }}
-                      >
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', overflow: 'hidden' }}>
-                          <Building2 size={14} color={isSelected ? '#38bdf8' : 'var(--text-muted)'} />
-                          <div style={{ overflow: 'hidden' }}>
-                            <div style={{ fontWeight: isSelected ? 600 : 500, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                              {org.name}
-                            </div>
-                            <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>
-                              Role: {org.role || 'MEMBER'} • {org.salesforceConnected ? 'SF Connected' : 'SF Offline'}
-                            </div>
-                          </div>
-                        </div>
-                        {isSelected && <Check size={14} color="#38bdf8" />}
-                      </div>
-                    );
-                  })}
-                </div>
-
-                <div style={{ borderTop: '1px solid var(--border-subtle)', paddingTop: '0.4rem', marginTop: '0.25rem' }}>
-                  <button
-                    type="button"
-                    onClick={() => { setOrgDropdownOpen(false); if (onOpenCreateOrg) onOpenCreateOrg(); }}
-                    style={{
-                      width: '100%',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '0.5rem',
-                      padding: '0.45rem 0.65rem',
-                      borderRadius: 'var(--radius-sm)',
-                      background: 'none',
-                      border: 'none',
-                      color: '#38bdf8',
-                      fontSize: '0.8rem',
-                      fontWeight: 600,
-                      cursor: 'pointer',
-                      textAlign: 'left'
-                    }}
-                  >
-                    <Plus size={14} /> Create New Workspace
-                  </button>
-                </div>
-              </div>
-            )}
+          {/* Active Workspace Link (opens user account workspaces view) */}
+          <div
+            onClick={() => setActiveTab('account')}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.5rem',
+              padding: '0.35rem 0.75rem',
+              background: 'rgba(255, 255, 255, 0.04)',
+              border: '1px solid var(--border-color)',
+              borderRadius: 'var(--radius-md)',
+              color: 'var(--text-secondary)',
+              fontSize: '0.8rem',
+              cursor: 'pointer',
+              transition: 'all 0.15s ease'
+            }}
+            title="Active workspace (Click to manage workspaces in Account)"
+          >
+            <Building2 size={14} color="#38bdf8" />
+            <span style={{ fontWeight: 600, color: '#fff', maxWidth: 150, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+              {activeOrgName || activeOrgId || 'Default Organization'}
+            </span>
           </div>
         </div>
 
-        {/* Center: Navigation Tabs */}
+        {/* Center: Main Navigation Tabs */}
         <nav style={{ display: 'flex', gap: '0.4rem' }}>
           <button
             onClick={() => setActiveTab('explorer')}
@@ -250,37 +125,34 @@ export default function Navbar({ activeTab, setActiveTab, sfStatus, onOpenCreate
           </button>
 
           <button
-            onClick={() => setActiveTab('team')}
-            className={`btn ${activeTab === 'team' ? 'btn-primary' : 'btn-secondary'} btn-sm`}
+            onClick={() => setActiveTab('sync-logs')}
+            className={`btn ${activeTab === 'sync-logs' ? 'btn-primary' : 'btn-secondary'} btn-sm`}
           >
-            <Users size={14} />
-            Team
-          </button>
-
-          <button
-            onClick={() => setActiveTab('connection')}
-            className={`btn ${activeTab === 'connection' ? 'btn-primary' : 'btn-secondary'} btn-sm`}
-          >
-            <LinkIcon size={14} />
-            SF Setup
+            <FileText size={14} />
+            Sync Logs
           </button>
         </nav>
 
-        {/* Right: Salesforce Status & User Badge */}
+        {/* Right: Salesforce Status, User Account Button & Logout */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
           {/* Salesforce Status Badge */}
-          <div style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: '0.45rem',
-            padding: '0.3rem 0.65rem',
-            borderRadius: 'var(--radius-full)',
-            background: sfStatus?.connected ? 'rgba(52, 211, 153, 0.12)' : 'rgba(248, 113, 113, 0.12)',
-            border: `1px solid ${sfStatus?.connected ? 'rgba(52, 211, 153, 0.3)' : 'rgba(248, 113, 113, 0.3)'}`,
-            fontSize: '0.72rem',
-            fontWeight: 500,
-            color: sfStatus?.connected ? '#34d399' : '#f87171'
-          }}>
+          <div
+            onClick={() => setActiveTab('account')}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.45rem',
+              padding: '0.3rem 0.65rem',
+              borderRadius: 'var(--radius-full)',
+              background: sfStatus?.connected ? 'rgba(52, 211, 153, 0.12)' : 'rgba(248, 113, 113, 0.12)',
+              border: `1px solid ${sfStatus?.connected ? 'rgba(52, 211, 153, 0.3)' : 'rgba(248, 113, 113, 0.3)'}`,
+              fontSize: '0.72rem',
+              fontWeight: 500,
+              color: sfStatus?.connected ? '#34d399' : '#f87171',
+              cursor: 'pointer'
+            }}
+            title="Salesforce Connection Status (Click to configure in Account)"
+          >
             <span style={{
               width: 7,
               height: 7,
@@ -291,21 +163,34 @@ export default function Navbar({ activeTab, setActiveTab, sfStatus, onOpenCreate
             {sfStatus?.connected ? (sfStatus.isMock ? 'Mock Sandbox' : 'SF Connected') : 'SF Disconnected'}
           </div>
 
-          {/* User Profile Badge */}
+          {/* User Account / Profile Button */}
           {user && (
-            <div style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '0.5rem',
-              padding: '0.3rem 0.75rem',
-              borderRadius: 'var(--radius-md)',
-              background: 'rgba(255, 255, 255, 0.04)',
-              border: '1px solid var(--border-color)',
-              fontSize: '0.8rem'
-            }}>
-              <User size={14} color="#38bdf8" />
-              <span style={{ fontWeight: 600, color: 'var(--text-primary)' }}>{user.name}</span>
-            </div>
+            <button
+              type="button"
+              onClick={() => setActiveTab('account')}
+              className={`btn ${activeTab === 'account' ? 'btn-primary' : 'btn-secondary'} btn-sm`}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.5rem',
+                padding: '0.35rem 0.75rem'
+              }}
+              title="User Account & Settings (Profile, Workspaces, Team, SF Setup)"
+            >
+              <User size={14} />
+              <span style={{ fontWeight: 600 }}>{user.name}</span>
+              <span style={{
+                fontSize: '0.66rem',
+                fontWeight: 700,
+                color: roleStyle.color,
+                background: roleStyle.bg,
+                border: `1px solid ${roleStyle.border}`,
+                padding: '1px 5px',
+                borderRadius: 4
+              }}>
+                {roleStyle.label}
+              </span>
+            </button>
           )}
 
           <button onClick={logout} className="btn btn-secondary btn-sm" title="Log out">

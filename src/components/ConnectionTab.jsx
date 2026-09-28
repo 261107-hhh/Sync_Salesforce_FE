@@ -3,7 +3,7 @@ import { useAuth } from '../context/AuthContext';
 import api from '../api/client';
 import { KeyRound, Shield, AlertCircle, CheckCircle2, Unlink, Lock, Building2, Zap, Radio } from 'lucide-react';
 
-export default function ConnectionTab({ sfStatus, onStatusChange }) {
+export default function ConnectionTab({ sfStatus, onStatusChange, onNavigateProfile }) {
   const { activeOrgId, activeOrgName, activeOrgRole, fetchMyOrgs } = useAuth();
   const isManager = activeOrgRole === 'OWNER' || activeOrgRole === 'ADMIN';
 
@@ -17,16 +17,25 @@ export default function ConnectionTab({ sfStatus, onStatusChange }) {
   const [connecting, setConnecting] = useState(false);
   const [feedback, setFeedback] = useState(null);
 
-  // Pre-fill existing instanceUrl if available from status
+  // Pre-fill existing instanceUrl if available from status, but NEVER set username or password by default
   useEffect(() => {
     if (sfStatus?.connected) {
-      if (sfStatus?.instanceUrl) setInstanceUrl(sfStatus.instanceUrl);
-      if (sfStatus?.mode) setMode(sfStatus.mode);
-    } else {
-      if (mode !== 'mock') {
-        setInstanceUrl('');
+      if (sfStatus?.instanceUrl && !sfStatus.isMock) setInstanceUrl(sfStatus.instanceUrl);
+      if (sfStatus?.mode && sfStatus.mode !== 'mock') {
+        setMode(sfStatus.mode);
+      } else {
+        setMode('eca');
       }
+    } else {
+      setInstanceUrl('');
+      setMode('eca');
     }
+    // Never pre-fill username or password by default in the UI
+    setUsername('');
+    setPassword('');
+    setSecurityToken('');
+    setClientId('');
+    setClientSecret('');
   }, [sfStatus]);
 
   const handleConnect = async (e) => {
@@ -50,8 +59,6 @@ export default function ConnectionTab({ sfStatus, onStatusChange }) {
         payload.username = username.trim();
         payload.password = password;
         payload.securityToken = securityToken.trim();
-      } else if (mode === 'mock') {
-        payload.instanceUrl = instanceUrl.trim() || 'https://mock.salesforce.local';
       }
 
       // Multi-tenant Org connect endpoint
@@ -76,46 +83,6 @@ export default function ConnectionTab({ sfStatus, onStatusChange }) {
       setFeedback({
         type: 'error',
         message: err.response?.data?.error || err.response?.data?.message || err.message || 'Connection failed'
-      });
-    } finally {
-      setConnecting(false);
-    }
-  };
-
-  const handleQuickConnectMock = async () => {
-    if (!isManager) return;
-    setConnecting(true);
-    setFeedback(null);
-    try {
-      const payload = { mode: 'mock', instanceUrl: 'https://mock.salesforce.local' };
-      if (activeOrgId) {
-        await api.post(`/api/orgs/${activeOrgId}/salesforce/connect`, payload);
-      }
-      try {
-        await api.post('/api/auth/connect', payload);
-      } catch (e) {
-        // ignore
-      }
-
-      setFeedback({
-        type: 'success',
-        message: `Mock Sandbox activated successfully for ${activeOrgName || 'organization'}!`
-      });
-
-      if (onStatusChange) {
-        await onStatusChange({
-          connected: true,
-          isMock: true,
-          mode: 'mock',
-          instanceUrl: 'https://mock.salesforce.local',
-          username: 'developer@sandbox.mock'
-        });
-      }
-      if (fetchMyOrgs) await fetchMyOrgs();
-    } catch (err) {
-      setFeedback({
-        type: 'error',
-        message: err.response?.data?.error || err.response?.data?.message || 'Failed to activate mock sandbox'
       });
     } finally {
       setConnecting(false);
@@ -254,16 +221,15 @@ export default function ConnectionTab({ sfStatus, onStatusChange }) {
                 </button>
               )
             ) : (
-              isManager && (
+              isManager && onNavigateProfile && (
                 <button
                   type="button"
-                  onClick={handleQuickConnectMock}
-                  disabled={connecting}
+                  onClick={onNavigateProfile}
                   className="btn btn-secondary btn-sm"
-                  style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}
+                  style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', color: '#c084fc', borderColor: 'rgba(192, 132, 252, 0.4)' }}
                 >
-                  <Zap size={14} color="#38bdf8" />
-                  Quick Connect Mock
+                  <Zap size={14} />
+                  Connect Mock in Profile & Security →
                 </button>
               )
             )}
@@ -310,11 +276,42 @@ export default function ConnectionTab({ sfStatus, onStatusChange }) {
           </div>
         )}
 
-        {/* Mode Selector */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '0.75rem', marginBottom: '1.5rem' }}>
+        {/* Mock Sandbox Shift Notice */}
+        <div style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          flexWrap: 'wrap',
+          gap: '0.75rem',
+          padding: '0.85rem 1.1rem',
+          borderRadius: 'var(--radius-md)',
+          background: 'rgba(192, 132, 252, 0.08)',
+          border: '1px solid rgba(192, 132, 252, 0.25)',
+          marginBottom: '1.25rem'
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
+            <Zap size={18} color="#c084fc" />
+            <div style={{ fontSize: '0.82rem', color: 'var(--text-secondary)' }}>
+              <strong style={{ color: '#fff' }}>Simulated Mock Testing: </strong>
+              The Mock Sandbox option is located under the <strong>Profile & Security</strong> tab for safe testing without live Salesforce credentials.
+            </div>
+          </div>
+          {onNavigateProfile && (
+            <button
+              type="button"
+              className="btn btn-secondary btn-sm"
+              style={{ fontSize: '0.75rem', padding: '0.25rem 0.65rem', color: '#c084fc', borderColor: 'rgba(192, 132, 252, 0.4)' }}
+              onClick={onNavigateProfile}
+            >
+              Go to Profile & Security →
+            </button>
+          )}
+        </div>
+
+        {/* Live Salesforce Mode Selector */}
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '0.75rem', marginBottom: '1.5rem' }}>
           {[
-            { id: 'eca', label: 'External Client App', desc: 'OAuth 2.0 Client Credentials (Production Recommended)' },
-            { id: 'mock', label: 'Mock Sandbox', desc: 'Local testing & simulation without live SF org' },
+            { id: 'eca', label: 'External Client App (ECA)', desc: 'OAuth 2.0 Client Credentials (Production Recommended)' },
             { id: 'password', label: 'Username & Password', desc: 'Direct credentials flow with Security Token' }
           ].map((m) => (
             <div
@@ -340,7 +337,7 @@ export default function ConnectionTab({ sfStatus, onStatusChange }) {
           ))}
         </div>
 
-        <form onSubmit={handleConnect}>
+        <form onSubmit={handleConnect} autoComplete="off">
           {mode === 'eca' && (
             <>
               <div className="form-group">
@@ -352,6 +349,7 @@ export default function ConnectionTab({ sfStatus, onStatusChange }) {
                   placeholder="https://yourcompany.my.salesforce.com"
                   className="form-input"
                   value={instanceUrl}
+                  autoComplete="off"
                   onChange={(e) => setInstanceUrl(e.target.value)}
                 />
               </div>
@@ -365,6 +363,7 @@ export default function ConnectionTab({ sfStatus, onStatusChange }) {
                   placeholder="3MVG9lKcPoNInDA..."
                   className="form-input"
                   value={clientId}
+                  autoComplete="off"
                   onChange={(e) => setClientId(e.target.value)}
                 />
               </div>
@@ -378,6 +377,7 @@ export default function ConnectionTab({ sfStatus, onStatusChange }) {
                   placeholder="••••••••••••••••••••••••"
                   className="form-input"
                   value={clientSecret}
+                  autoComplete="new-password"
                   onChange={(e) => setClientSecret(e.target.value)}
                 />
               </div>
@@ -395,6 +395,7 @@ export default function ConnectionTab({ sfStatus, onStatusChange }) {
                   placeholder="https://yourcompany.my.salesforce.com"
                   className="form-input"
                   value={instanceUrl}
+                  autoComplete="off"
                   onChange={(e) => setInstanceUrl(e.target.value)}
                 />
               </div>
@@ -408,6 +409,7 @@ export default function ConnectionTab({ sfStatus, onStatusChange }) {
                   placeholder="integration.user@company.com"
                   className="form-input"
                   value={username}
+                  autoComplete="off"
                   onChange={(e) => setUsername(e.target.value)}
                 />
               </div>
@@ -421,6 +423,7 @@ export default function ConnectionTab({ sfStatus, onStatusChange }) {
                   placeholder="••••••••"
                   className="form-input"
                   value={password}
+                  autoComplete="new-password"
                   onChange={(e) => setPassword(e.target.value)}
                 />
               </div>
@@ -433,35 +436,61 @@ export default function ConnectionTab({ sfStatus, onStatusChange }) {
                   placeholder="Security token string"
                   className="form-input"
                   value={securityToken}
+                  autoComplete="new-password"
                   onChange={(e) => setSecurityToken(e.target.value)}
                 />
               </div>
             </>
           )}
 
-          {mode === 'mock' && (
-            <div style={{
-              padding: '1.25rem',
-              borderRadius: 'var(--radius-md)',
-              background: 'rgba(56, 189, 248, 0.05)',
-              border: '1px dashed rgba(56, 189, 248, 0.3)',
-              marginBottom: '1.5rem',
-              fontSize: '0.85rem',
-              color: 'var(--text-secondary)'
-            }}>
-              Mock Sandbox mode allows your entire organization team to simulate syncing, querying, and record creation locally without requiring live Salesforce credentials.
-            </div>
-          )}
-
           {isManager && (
-            <button
-              type="submit"
-              disabled={connecting}
-              className="btn btn-primary"
-              style={{ width: '100%', padding: '0.75rem', marginTop: '0.5rem' }}
-            >
-              {connecting ? 'Saving & Authenticating...' : (mode === 'mock' ? 'Activate Mock Sandbox for Team' : 'Authenticate & Connect Salesforce')}
-            </button>
+            sfStatus?.connected ? (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', marginTop: '1rem' }}>
+                <button
+                  type="button"
+                  onClick={handleDisconnect}
+                  disabled={connecting}
+                  className="btn btn-danger"
+                  style={{
+                    width: '100%',
+                    padding: '0.75rem',
+                    background: 'linear-gradient(135deg, #dc2626, #ef4444)',
+                    color: '#fff',
+                    border: '1px solid #ef4444',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '0.5rem',
+                    fontWeight: 700,
+                    boxShadow: '0 4px 15px rgba(239, 68, 68, 0.3)'
+                  }}
+                >
+                  <Unlink size={16} />
+                  {connecting ? 'Disconnecting Salesforce...' : 'Disconnect Salesforce'}
+                </button>
+
+                <div style={{ display: 'flex', justifyContent: 'center' }}>
+                  <button
+                    type="submit"
+                    disabled={connecting}
+                    className="btn btn-secondary btn-sm"
+                    style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}
+                    title="Submit to re-authenticate with newly entered credentials"
+                  >
+                    {connecting ? 'Updating...' : 'Update & Re-authenticate Credentials'}
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <button
+                type="submit"
+                disabled={connecting}
+                className="btn btn-primary"
+                style={{ width: '100%', padding: '0.75rem', marginTop: '0.5rem' }}
+              >
+                {connecting ? 'Saving & Authenticating...' : 'Authenticate & Connect Salesforce'}
+              </button>
+            )
           )}
         </form>
       </div>

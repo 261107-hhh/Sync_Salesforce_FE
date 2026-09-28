@@ -1,10 +1,11 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useAuth } from '../context/AuthContext';
 import api from '../api/client';
 import {
   Search,
   Plus,
   Eye,
+  Edit3,
   ChevronLeft,
   ChevronRight,
   UserCheck,
@@ -13,31 +14,67 @@ import {
   FileSpreadsheet,
   FileCode,
   Building2,
-  Lock
+  Lock,
+  Filter,
+  X,
+  ShieldCheck,
+  CheckCircle2
 } from 'lucide-react';
 
-export default function DataExplorer({ onOpenDetails, onOpenCreate, sfStatus }) {
+export default function DataExplorer({ onOpenDetails, onOpenCreate, onOpenEdit, sfStatus, refreshSignal }) {
   const { activeOrgId, activeOrgName, activeOrgRole } = useAuth();
   const isReadOnly = activeOrgRole === 'READONLY';
 
   const [activeTable, setActiveTable] = useState('Account');
   const [tableCounts, setTableCounts] = useState([]);
   const [records, setRecords] = useState([]);
-  const [columns, setColumns] = useState([]);
-  const [search, setSearch] = useState('');
+  const [searchInput, setSearchInput] = useState('');
+  const [debouncedSearch, setDebouncedSearch] = useState('');
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [totalRecords, setTotalRecords] = useState(0);
   const [loading, setLoading] = useState(false);
   const [exporting, setExporting] = useState(false);
 
+  // Tab-specific filters
+  const [filterOrigin, setFilterOrigin] = useState('all'); // 'all' | 'custom' | 'salesforce'
+  const [filterIndustry, setFilterIndustry] = useState('');
+  const [filterType, setFilterType] = useState('');
+  const [filterStage, setFilterStage] = useState('');
+  const [filterStatus, setFilterStatus] = useState('');
+  const [filterDepartment, setFilterDepartment] = useState('');
+
+  // Debounce search input by 280ms to avoid network storms while typing
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearch(searchInput.trim());
+      setPage(1);
+    }, 280);
+    return () => clearTimeout(timer);
+  }, [searchInput]);
+
+  // Clean table switch handler: resets filters in a single pass without cascading effect runs
+  const handleSwitchTable = (newTab) => {
+    if (newTab === activeTable) return;
+    setActiveTable(newTab);
+    setPage(1);
+    setSearchInput('');
+    setDebouncedSearch('');
+    setFilterOrigin('all');
+    setFilterIndustry('');
+    setFilterType('');
+    setFilterStage('');
+    setFilterStatus('');
+    setFilterDepartment('');
+  };
+
   useEffect(() => {
     fetchTableCounts();
-  }, [activeOrgId]);
+  }, [activeOrgId, refreshSignal]);
 
   useEffect(() => {
     fetchRecords();
-  }, [activeTable, page, search, activeOrgId]);
+  }, [activeTable, page, debouncedSearch, activeOrgId, refreshSignal]);
 
   const fetchTableCounts = async () => {
     try {
@@ -54,11 +91,10 @@ export default function DataExplorer({ onOpenDetails, onOpenCreate, sfStatus }) 
     setLoading(true);
     try {
       const res = await api.get(`/api/data/${activeTable}`, {
-        params: { page, limit: 15, search }
+        params: { page, limit: 25, search: debouncedSearch }
       });
       if (res.data.success && res.data.data) {
         setRecords(res.data.data.records || []);
-        setColumns(res.data.data.columns || []);
         setTotalPages(res.data.data.totalPages || 1);
         setTotalRecords(res.data.data.total || 0);
       }
@@ -77,7 +113,6 @@ export default function DataExplorer({ onOpenDetails, onOpenCreate, sfStatus }) 
         responseType: 'blob'
       });
 
-      // Trigger browser download
       const blob = new Blob([res.data], {
         type: format === 'csv' ? 'text/csv;charset=utf-8;' : 'application/json'
       });
@@ -96,10 +131,64 @@ export default function DataExplorer({ onOpenDetails, onOpenCreate, sfStatus }) 
     }
   };
 
+  // Filter records based on active object tab filters
+  const filteredRecords = useMemo(() => {
+    return records.filter((row) => {
+      // Origin Filter
+      const isCustom = Boolean(row.is_custom_app_created || row.custom_app_created_by);
+      if (filterOrigin === 'custom' && !isCustom) return false;
+      if (filterOrigin === 'salesforce' && isCustom) return false;
+
+      // Account Filters
+      if (activeTable === 'Account') {
+        if (filterIndustry && (row.Industry || row.industry) !== filterIndustry) return false;
+        if (filterType && (row.Type || row.type) !== filterType) return false;
+      }
+
+      // Contact Filters
+      if (activeTable === 'Contact') {
+        if (filterDepartment && (row.Department || row.department) !== filterDepartment) return false;
+      }
+
+      // Opportunity Filters
+      if (activeTable === 'Opportunity') {
+        if (filterStage && (row.StageName || row.stageName) !== filterStage) return false;
+        if (filterType && (row.Type || row.type) !== filterType) return false;
+      }
+
+      // Lead Filters
+      if (activeTable === 'Lead') {
+        if (filterStatus && (row.Status || row.status) !== filterStatus) return false;
+        if (filterIndustry && (row.Industry || row.industry) !== filterIndustry) return false;
+      }
+
+      return true;
+    });
+  }, [records, filterOrigin, filterIndustry, filterType, filterStage, filterStatus, filterDepartment, activeTable]);
+
+  const hasActiveFilters = Boolean(
+    filterOrigin !== 'all' ||
+    filterIndustry ||
+    filterType ||
+    filterStage ||
+    filterStatus ||
+    filterDepartment
+  );
+
+  const resetFilters = () => {
+    setFilterOrigin('all');
+    setFilterIndustry('');
+    setFilterType('');
+    setFilterStage('');
+    setFilterStatus('');
+    setFilterDepartment('');
+  };
+
   const isLive = sfStatus?.connected;
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+      
       {/* Header Bar */}
       <div className="card" style={{ padding: '1rem 1.5rem' }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '1rem' }}>
@@ -112,7 +201,7 @@ export default function DataExplorer({ onOpenDetails, onOpenCreate, sfStatus }) 
                 <button
                   key={tab}
                   type="button"
-                  onClick={() => { setActiveTable(tab); setPage(1); }}
+                  onClick={() => handleSwitchTable(tab)}
                   style={{
                     display: 'flex',
                     alignItems: 'center',
@@ -147,11 +236,33 @@ export default function DataExplorer({ onOpenDetails, onOpenCreate, sfStatus }) 
                 type="text"
                 placeholder={`Search ${activeTable}...`}
                 className="form-input"
-                style={{ paddingLeft: '2.2rem', width: 220, padding: '0.45rem 0.85rem 0.45rem 2.2rem', fontSize: '0.82rem' }}
-                value={search}
-                onChange={(e) => { setSearch(e.target.value); setPage(1); }}
+                style={{ paddingLeft: '2.2rem', paddingRight: searchInput ? '2rem' : '0.85rem', width: 220, padding: '0.45rem 0.85rem 0.45rem 2.2rem', fontSize: '0.82rem' }}
+                value={searchInput}
+                onChange={(e) => setSearchInput(e.target.value)}
               />
               <Search size={14} color="var(--text-muted)" style={{ position: 'absolute', left: '0.75rem', top: '50%', transform: 'translateY(-50%)' }} />
+              {searchInput && (
+                <button
+                  type="button"
+                  onClick={() => setSearchInput('')}
+                  style={{
+                    position: 'absolute',
+                    right: '0.6rem',
+                    top: '50%',
+                    transform: 'translateY(-50%)',
+                    background: 'transparent',
+                    border: 'none',
+                    color: 'var(--text-muted)',
+                    cursor: 'pointer',
+                    padding: 0,
+                    display: 'flex',
+                    alignItems: 'center'
+                  }}
+                  title="Clear search"
+                >
+                  <X size={13} />
+                </button>
+              )}
             </div>
 
             {/* Refresh */}
@@ -205,6 +316,168 @@ export default function DataExplorer({ onOpenDetails, onOpenCreate, sfStatus }) 
             )}
           </div>
         </div>
+
+        {/* Dynamic Object Filter Bar */}
+        <div style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: '0.75rem',
+          flexWrap: 'wrap',
+          marginTop: '1rem',
+          paddingTop: '0.85rem',
+          borderTop: '1px solid var(--border-subtle)',
+          fontSize: '0.82rem'
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', color: 'var(--text-muted)', fontWeight: 600 }}>
+            <Filter size={14} /> Filters:
+          </div>
+
+          {/* Origin Filter (Applies to all objects) */}
+          <select
+            className="form-select"
+            style={{ width: 'auto', padding: '0.3rem 0.6rem', fontSize: '0.8rem' }}
+            value={filterOrigin}
+            onChange={(e) => setFilterOrigin(e.target.value)}
+          >
+            <option value="all">All Origins</option>
+            <option value="custom">Created in Custom App</option>
+            <option value="salesforce">Salesforce Synced</option>
+          </select>
+
+          {/* Account Filters */}
+          {activeTable === 'Account' && (
+            <>
+              <select
+                className="form-select"
+                style={{ width: 'auto', padding: '0.3rem 0.6rem', fontSize: '0.8rem' }}
+                value={filterIndustry}
+                onChange={(e) => setFilterIndustry(e.target.value)}
+              >
+                <option value="">All Industries</option>
+                <option value="Technology">Technology</option>
+                <option value="Finance">Finance</option>
+                <option value="Healthcare">Healthcare</option>
+                <option value="Manufacturing">Manufacturing</option>
+                <option value="Consulting">Consulting</option>
+                <option value="Education">Education</option>
+                <option value="Energy">Energy</option>
+                <option value="Retail">Retail</option>
+              </select>
+
+              <select
+                className="form-select"
+                style={{ width: 'auto', padding: '0.3rem 0.6rem', fontSize: '0.8rem' }}
+                value={filterType}
+                onChange={(e) => setFilterType(e.target.value)}
+              >
+                <option value="">All Types</option>
+                <option value="Prospect">Prospect</option>
+                <option value="Customer - Direct">Customer - Direct</option>
+                <option value="Customer - Channel">Customer - Channel</option>
+                <option value="Channel Partner / Reseller">Channel Partner / Reseller</option>
+              </select>
+            </>
+          )}
+
+          {/* Contact Filters */}
+          {activeTable === 'Contact' && (
+            <select
+              className="form-select"
+              style={{ width: 'auto', padding: '0.3rem 0.6rem', fontSize: '0.8rem' }}
+              value={filterDepartment}
+              onChange={(e) => setFilterDepartment(e.target.value)}
+            >
+              <option value="">All Departments</option>
+              <option value="Engineering">Engineering</option>
+              <option value="Sales">Sales</option>
+              <option value="Marketing">Marketing</option>
+              <option value="Operations">Operations</option>
+              <option value="Finance">Finance</option>
+              <option value="Executive">Executive</option>
+            </select>
+          )}
+
+          {/* Opportunity Filters */}
+          {activeTable === 'Opportunity' && (
+            <>
+              <select
+                className="form-select"
+                style={{ width: 'auto', padding: '0.3rem 0.6rem', fontSize: '0.8rem' }}
+                value={filterStage}
+                onChange={(e) => setFilterStage(e.target.value)}
+              >
+                <option value="">All Stages</option>
+                <option value="Prospecting">Prospecting</option>
+                <option value="Qualification">Qualification</option>
+                <option value="Needs Analysis">Needs Analysis</option>
+                <option value="Value Proposition">Value Proposition</option>
+                <option value="Proposal/Price Quote">Proposal/Price Quote</option>
+                <option value="Negotiation/Review">Negotiation/Review</option>
+                <option value="Closed Won">Closed Won</option>
+                <option value="Closed Lost">Closed Lost</option>
+              </select>
+
+              <select
+                className="form-select"
+                style={{ width: 'auto', padding: '0.3rem 0.6rem', fontSize: '0.8rem' }}
+                value={filterType}
+                onChange={(e) => setFilterType(e.target.value)}
+              >
+                <option value="">All Deal Types</option>
+                <option value="New Customer">New Customer</option>
+                <option value="Existing Customer - Upgrade">Existing Customer - Upgrade</option>
+                <option value="Existing Customer - Replacement">Existing Customer - Replacement</option>
+              </select>
+            </>
+          )}
+
+          {/* Lead Filters */}
+          {activeTable === 'Lead' && (
+            <>
+              <select
+                className="form-select"
+                style={{ width: 'auto', padding: '0.3rem 0.6rem', fontSize: '0.8rem' }}
+                value={filterStatus}
+                onChange={(e) => setFilterStatus(e.target.value)}
+              >
+                <option value="">All Statuses</option>
+                <option value="Open - Not Contacted">Open - Not Contacted</option>
+                <option value="Working - Contacted">Working - Contacted</option>
+                <option value="Closed - Converted">Closed - Converted</option>
+                <option value="Closed - Not Converted">Closed - Not Converted</option>
+              </select>
+
+              <select
+                className="form-select"
+                style={{ width: 'auto', padding: '0.3rem 0.6rem', fontSize: '0.8rem' }}
+                value={filterIndustry}
+                onChange={(e) => setFilterIndustry(e.target.value)}
+              >
+                <option value="">All Industries</option>
+                <option value="Technology">Technology</option>
+                <option value="Finance">Finance</option>
+                <option value="Healthcare">Healthcare</option>
+                <option value="Manufacturing">Manufacturing</option>
+                <option value="Consulting">Consulting</option>
+              </select>
+            </>
+          )}
+
+          {/* Reset Filters Button */}
+          {hasActiveFilters && (
+            <button
+              onClick={resetFilters}
+              className="btn btn-secondary btn-sm"
+              style={{ fontSize: '0.75rem', padding: '0.2rem 0.5rem', color: '#f87171' }}
+            >
+              <X size={12} /> Clear Filters
+            </button>
+          )}
+
+          <div style={{ marginLeft: 'auto', fontSize: '0.78rem', color: 'var(--text-muted)' }}>
+            Showing {filteredRecords.length} matching rows
+          </div>
+        </div>
       </div>
 
       {/* Records Table */}
@@ -212,99 +485,253 @@ export default function DataExplorer({ onOpenDetails, onOpenCreate, sfStatus }) 
         <div style={{ overflowX: 'auto' }}>
           <table className="data-table">
             <thead>
-              <tr>
-                {columns.map((col) => (
-                  <th key={col}>
-                    {col === 'Account_Name' ? 'Related Account' : (col === 'custom_app_created_by' ? 'Created By (App)' : col)}
-                  </th>
-                ))}
-                {activeTable === 'Account' && <th>Related</th>}
-                <th style={{ textAlign: 'right' }}>Action</th>
-              </tr>
-            </thead>
-            <tbody>
-              {loading ? (
+              {/* ACCOUNT TABLE HEADERS */}
+              {activeTable === 'Account' && (
                 <tr>
-                  <td colSpan={columns.length + (activeTable === 'Account' ? 2 : 1)} style={{ textAlign: 'center', padding: '2.5rem', color: 'var(--text-muted)' }}>
-                    Loading records from {activeOrgName}...
+                  <th>ID</th>
+                  <th>Account Name</th>
+                  <th>Type</th>
+                  <th>Industry</th>
+                  <th>Phone</th>
+                  <th>City</th>
+                  <th>Annual Revenue</th>
+                  <th>Origin</th>
+                  <th>Created By</th>
+                  <th>Modified By</th>
+                  <th>Synced By</th>
+                  <th>Related</th>
+                  <th style={{ textAlign: 'right' }}>Actions</th>
+                </tr>
+              )}
+
+              {/* CONTACT TABLE HEADERS */}
+              {activeTable === 'Contact' && (
+                <tr>
+                  <th>ID</th>
+                  <th>Name</th>
+                  <th>Title</th>
+                  <th>Email</th>
+                  <th>Phone</th>
+                  <th>Department</th>
+                  <th>Related Account</th>
+                  <th>Origin</th>
+                  <th>Created By</th>
+                  <th>Modified By</th>
+                  <th>Synced By</th>
+                  <th style={{ textAlign: 'right' }}>Actions</th>
+                </tr>
+              )}
+
+              {/* OPPORTUNITY TABLE HEADERS */}
+              {activeTable === 'Opportunity' && (
+                <tr>
+                  <th>ID</th>
+                  <th>Opportunity Name</th>
+                  <th>Stage</th>
+                  <th>Amount</th>
+                  <th>Close Date</th>
+                  <th>Probability</th>
+                  <th>Related Account</th>
+                  <th>Origin</th>
+                  <th>Created By</th>
+                  <th>Modified By</th>
+                  <th>Synced By</th>
+                  <th style={{ textAlign: 'right' }}>Actions</th>
+                </tr>
+              )}
+
+              {/* LEAD TABLE HEADERS */}
+              {activeTable === 'Lead' && (
+                <tr>
+                  <th>ID</th>
+                  <th>Lead Name</th>
+                  <th>Company</th>
+                  <th>Status</th>
+                  <th>Title</th>
+                  <th>Email</th>
+                  <th>Phone</th>
+                  <th>Industry</th>
+                  <th>Origin</th>
+                  <th>Created By</th>
+                  <th>Modified By</th>
+                  <th>Synced By</th>
+                  <th style={{ textAlign: 'right' }}>Actions</th>
+                </tr>
+              )}
+            </thead>
+
+            <tbody style={{ opacity: loading ? 0.65 : 1, transition: 'opacity 0.15s ease' }}>
+              {loading && records.length === 0 ? (
+                <tr>
+                  <td colSpan="14" style={{ textAlign: 'center', padding: '3rem', color: 'var(--text-muted)' }}>
+                    <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.6rem' }}>
+                      <RefreshCw size={16} className="spin" color="#38bdf8" />
+                      Loading {activeTable} records from {activeOrgName || activeOrgId}...
+                    </div>
                   </td>
                 </tr>
-              ) : records.length === 0 ? (
+              ) : filteredRecords.length === 0 ? (
                 <tr>
-                  <td colSpan={columns.length + (activeTable === 'Account' ? 2 : 1)} style={{ textAlign: 'center', padding: '2.5rem', color: 'var(--text-muted)' }}>
-                    No records match your criteria in workspace <strong>{activeOrgName || activeOrgId}</strong>.
+                  <td colSpan="14" style={{ textAlign: 'center', padding: '3rem', color: 'var(--text-muted)' }}>
+                    {loading ? (
+                      <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.6rem' }}>
+                        <RefreshCw size={16} className="spin" color="#38bdf8" />
+                        Fetching latest records...
+                      </div>
+                    ) : (
+                      <>No records found matching your filters in workspace <strong>{activeOrgName || activeOrgId}</strong>.</>
+                    )}
                   </td>
                 </tr>
               ) : (
-                records.map((row, idx) => {
+                filteredRecords.map((row, idx) => {
                   const rowId = row.Id || row.id || row.ID || idx;
-                  const getVal = (col) => {
-                    if (row[col] !== undefined && row[col] !== null) return row[col];
-                    const matchKey = Object.keys(row).find((k) => k.toLowerCase() === col.toLowerCase());
-                    return matchKey ? row[matchKey] : null;
-                  };
-
-                  const accountId = row.AccountId || row.accountid || row.accountId;
+                  const isCustom = Boolean(row.is_custom_app_created || row.isCustomAppCreated || row.custom_app_created_by || row.customAppCreatedBy);
+                  const createdBy = row.custom_app_created_by || row.customAppCreatedBy || null;
+                  const modifiedBy = row.custom_app_modified_by || row.customAppModifiedBy || null;
+                  const syncedBy = row.synced_by || row.syncedBy || null;
+                  const accountId = row.AccountId || row.accountId || row.accountid;
                   const accountName = row.Account_Name || row.account_name || row.AccountName;
-                  const createdBy = getVal('custom_app_created_by');
 
                   return (
                     <tr key={rowId}>
-                      {columns.map((col) => {
-                        const val = getVal(col);
+                      {/* ID */}
+                      <td style={{ fontFamily: 'var(--font-mono)', fontSize: '0.78rem', color: '#38bdf8' }}>
+                        {String(rowId).slice(0, 18)}
+                      </td>
 
-                        if (col.toLowerCase() === 'id') {
-                          return <td key={col} style={{ fontFamily: 'var(--font-mono)', fontSize: '0.8rem', color: '#38bdf8' }}>{val || rowId}</td>;
-                        }
+                      {/* ACCOUNT SPECIFIC ROW */}
+                      {activeTable === 'Account' && (
+                        <>
+                          <td style={{ fontWeight: 600, color: '#fff' }}>{row.Name || row.name || '-'}</td>
+                          <td>{row.Type || row.type || '-'}</td>
+                          <td>{row.Industry || row.industry || '-'}</td>
+                          <td>{row.Phone || row.phone || '-'}</td>
+                          <td>{row.BillingCity || row.billingCity || '-'}</td>
+                          <td style={{ color: '#34d399', fontWeight: 600 }}>
+                            {row.AnnualRevenue || row.annualRevenue ? `$${Number(row.AnnualRevenue || row.annualRevenue).toLocaleString()}` : '-'}
+                          </td>
+                        </>
+                      )}
 
-                        if (col === 'Account_Name' || col.toLowerCase() === 'accountid') {
-                          return (
-                            <td key={col}>
-                              {accountId ? (
-                                <span
-                                  className="account-pill"
-                                  onClick={() => onOpenDetails('Account', accountId)}
-                                  title="Click to view Account"
-                                >
-                                  🏢 {accountName || accountId}
-                                </span>
-                              ) : (
-                                <span style={{ color: 'var(--text-muted)' }}>-</span>
-                              )}
-                            </td>
-                          );
-                        }
+                      {/* CONTACT SPECIFIC ROW */}
+                      {activeTable === 'Contact' && (
+                        <>
+                          <td style={{ fontWeight: 600, color: '#fff' }}>
+                            {row.Name || `${row.FirstName || row.firstName || ''} ${row.LastName || row.lastName || ''}`.trim() || '-'}
+                          </td>
+                          <td>{row.Title || row.title || '-'}</td>
+                          <td style={{ color: '#38bdf8' }}>{row.Email || row.email || '-'}</td>
+                          <td>{row.Phone || row.phone || '-'}</td>
+                          <td>{row.Department || row.department || '-'}</td>
+                          <td>
+                            {accountId ? (
+                              <span
+                                className="account-pill"
+                                onClick={() => onOpenDetails('Account', accountId)}
+                                title="Click to view Account"
+                              >
+                                🏢 {accountName || accountId}
+                              </span>
+                            ) : (
+                              <span style={{ color: 'var(--text-muted)' }}>-</span>
+                            )}
+                          </td>
+                        </>
+                      )}
 
-                        if (col === 'custom_app_created_by') {
-                          return (
-                            <td key={col}>
-                              {createdBy ? (
-                                <span className="creator-badge" title="Created by user in Custom App">
-                                  <UserCheck size={12} /> {createdBy}
-                                </span>
-                              ) : (
-                                <span style={{ color: 'var(--text-muted)', fontSize: '0.78rem' }}>SF Sync</span>
-                              )}
-                            </td>
-                          );
-                        }
+                      {/* OPPORTUNITY SPECIFIC ROW */}
+                      {activeTable === 'Opportunity' && (
+                        <>
+                          <td style={{ fontWeight: 600, color: '#fff' }}>{row.Name || row.name || '-'}</td>
+                          <td>
+                            <span className="badge badge-info">{row.StageName || row.stageName || '-'}</span>
+                          </td>
+                          <td style={{ color: '#34d399', fontWeight: 700 }}>
+                            {row.Amount || row.amount ? `$${Number(row.Amount || row.amount).toLocaleString()}` : '-'}
+                          </td>
+                          <td style={{ fontSize: '0.8rem' }}>{row.CloseDate || row.closeDate || '-'}</td>
+                          <td>{row.Probability || row.probability ? `${row.Probability || row.probability}%` : '-'}</td>
+                          <td>
+                            {accountId ? (
+                              <span
+                                className="account-pill"
+                                onClick={() => onOpenDetails('Account', accountId)}
+                                title="Click to view Account"
+                              >
+                                🏢 {accountName || accountId}
+                              </span>
+                            ) : (
+                              <span style={{ color: 'var(--text-muted)' }}>-</span>
+                            )}
+                          </td>
+                        </>
+                      )}
 
-                        return <td key={col}>{val !== null && val !== undefined ? String(val) : '-'}</td>;
-                      })}
+                      {/* LEAD SPECIFIC ROW */}
+                      {activeTable === 'Lead' && (
+                        <>
+                          <td style={{ fontWeight: 600, color: '#fff' }}>
+                            {row.Name || `${row.FirstName || row.firstName || ''} ${row.LastName || row.lastName || ''}`.trim() || '-'}
+                          </td>
+                          <td style={{ fontWeight: 500 }}>{row.Company || row.company || '-'}</td>
+                          <td>
+                            <span className="badge badge-info">{row.Status || row.status || '-'}</span>
+                          </td>
+                          <td>{row.Title || row.title || '-'}</td>
+                          <td style={{ color: '#38bdf8' }}>{row.Email || row.email || '-'}</td>
+                          <td>{row.Phone || row.phone || '-'}</td>
+                          <td>{row.Industry || row.industry || '-'}</td>
+                        </>
+                      )}
 
-                      {/* Account Specific Related Pills */}
+                      {/* ORIGIN BADGE */}
+                      <td>
+                        <span className={`badge ${isCustom ? 'badge-info' : 'badge-primary'}`} style={{ fontSize: '0.7rem' }}>
+                          {isCustom ? 'Custom App' : 'SF Synced'}
+                        </span>
+                      </td>
+
+                      {/* CREATED BY COLUMN */}
+                      <td>
+                        {createdBy ? (
+                          <span className="creator-badge" title={`Created by user in Custom App on ${row.custom_app_created_at || ''}`}>
+                            <UserCheck size={12} /> {createdBy.split('@')[0]}
+                          </span>
+                        ) : (
+                          <span style={{ color: 'var(--text-muted)', fontSize: '0.75rem' }}>SF System</span>
+                        )}
+                      </td>
+
+                      {/* MODIFIED BY COLUMN */}
+                      <td>
+                        {modifiedBy ? (
+                          <span className="creator-badge" style={{ borderColor: 'rgba(192, 132, 252, 0.4)', color: '#c084fc' }} title={`Modified by ${modifiedBy} on ${row.custom_app_modified_at || ''}`}>
+                            <Edit3 size={11} /> {modifiedBy.split('@')[0]}
+                          </span>
+                        ) : (
+                          <span style={{ color: 'var(--text-muted)', fontSize: '0.75rem' }}>-</span>
+                        )}
+                      </td>
+
+                      {/* SYNCED BY COLUMN */}
+                      <td style={{ fontSize: '0.78rem', color: '#34d399' }}>
+                        {syncedBy ? syncedBy.split('@')[0] : 'System'}
+                      </td>
+
+                      {/* ACCOUNT RELATED PILLS */}
                       {activeTable === 'Account' && (
                         <td>
                           <span
                             className="account-pill"
-                            style={{ marginRight: 6, fontSize: '0.75rem', padding: '0.15rem 0.5rem' }}
+                            style={{ marginRight: 6, fontSize: '0.72rem', padding: '0.15rem 0.45rem' }}
                             onClick={() => onOpenDetails('Account', rowId)}
                           >
                             👥 {row._contact_count || 0} Contacts
                           </span>
                           <span
                             className="account-pill"
-                            style={{ fontSize: '0.75rem', padding: '0.15rem 0.5rem' }}
+                            style={{ fontSize: '0.72rem', padding: '0.15rem 0.45rem' }}
                             onClick={() => onOpenDetails('Account', rowId)}
                           >
                             💼 {row._opportunity_count || 0} Deals
@@ -312,14 +739,29 @@ export default function DataExplorer({ onOpenDetails, onOpenCreate, sfStatus }) 
                         </td>
                       )}
 
+                      {/* ACTIONS: EDIT & DETAILS */}
                       <td style={{ textAlign: 'right' }}>
-                        <button
-                          onClick={() => onOpenDetails(activeTable, rowId)}
-                          className="btn btn-secondary btn-sm"
-                        >
-                          <Eye size={13} />
-                          Details
-                        </button>
+                        <div style={{ display: 'inline-flex', gap: '0.4rem' }}>
+                          {!isReadOnly && onOpenEdit && (
+                            <button
+                              onClick={() => onOpenEdit(activeTable, row)}
+                              className="btn btn-secondary btn-sm"
+                              title="Edit record fields"
+                              style={{ padding: '0.25rem 0.5rem', fontSize: '0.75rem' }}
+                            >
+                              <Edit3 size={12} />
+                              Edit
+                            </button>
+                          )}
+                          <button
+                            onClick={() => onOpenDetails(activeTable, rowId)}
+                            className="btn btn-secondary btn-sm"
+                            style={{ padding: '0.25rem 0.5rem', fontSize: '0.75rem' }}
+                          >
+                            <Eye size={12} />
+                            Details
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   );
@@ -341,7 +783,7 @@ export default function DataExplorer({ onOpenDetails, onOpenCreate, sfStatus }) 
           color: 'var(--text-secondary)'
         }}>
           <div>
-            Showing {records.length} of {totalRecords} records in <strong>{activeOrgName || activeOrgId}</strong>
+            Showing {filteredRecords.length} of {totalRecords} records in <strong>{activeOrgName || activeOrgId}</strong>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
             <button
