@@ -222,8 +222,8 @@ function MainApp() {
         onClose={() => setDetailModalOpen(false)}
         objectName={detailTargetObject}
         recordId={detailTargetId}
-        onOpenCreateWithAccount={handleAddChildFromAccount}
-        onEditRecord={handleOpenEdit}
+        onOpenCreateWithAccount={activeOrgRole === 'READONLY' ? null : handleAddChildFromAccount}
+        onEditRecord={activeOrgRole === 'READONLY' ? null : handleOpenEdit}
         onOpenRecordDetails={handleOpenDetails}
       />
 

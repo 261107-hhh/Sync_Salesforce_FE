@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import api from '../api/client';
+import { useAuth } from '../context/AuthContext';
 import {
   X,
   Copy,
@@ -55,6 +56,9 @@ export default function RecordDetailModal({
   onEditRecord,
   onOpenRecordDetails
 }) {
+  const { activeOrgRole } = useAuth();
+  const isReadOnly = activeOrgRole === 'READONLY';
+
   const [activeTab, setActiveTab] = useState('fields');
   const [loading, setLoading] = useState(false);
   const [relatedData, setRelatedData] = useState(null);
@@ -297,7 +301,7 @@ export default function RecordDetailModal({
           </div>
 
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-            {onEditRecord && (
+            {!isReadOnly && onEditRecord && (
               <button
                 type="button"
                 onClick={() => {
@@ -799,12 +803,14 @@ export default function RecordDetailModal({
                       <span style={{ fontSize: '0.88rem', fontWeight: 600 }}>
                         Related Contacts ({relatedData?.contacts?.length || 0})
                       </span>
-                      <button
-                        onClick={() => onOpenCreateWithAccount('Contact', recordId)}
-                        className="btn btn-secondary btn-sm"
-                      >
-                        + Add Contact for this Account
-                      </button>
+                      {!isReadOnly && onOpenCreateWithAccount && (
+                        <button
+                          onClick={() => onOpenCreateWithAccount('Contact', recordId)}
+                          className="btn btn-secondary btn-sm"
+                        >
+                          + Add Contact for this Account
+                        </button>
+                      )}
                     </div>
                     {(!relatedData?.contacts || relatedData.contacts.length === 0) ? (
                       <div style={{ padding: '1.25rem', textAlign: 'center', color: 'var(--text-muted)', fontSize: '0.82rem' }}>No contacts linked to this account.</div>
@@ -859,12 +865,14 @@ export default function RecordDetailModal({
                       <span style={{ fontSize: '0.88rem', fontWeight: 600 }}>
                         Related Opportunities ({relatedData?.opportunities?.length || 0})
                       </span>
-                      <button
-                        onClick={() => onOpenCreateWithAccount('Opportunity', recordId)}
-                        className="btn btn-secondary btn-sm"
-                      >
-                        + Add Opportunity for this Account
-                      </button>
+                      {!isReadOnly && onOpenCreateWithAccount && (
+                        <button
+                          onClick={() => onOpenCreateWithAccount('Opportunity', recordId)}
+                          className="btn btn-secondary btn-sm"
+                        >
+                          + Add Opportunity for this Account
+                        </button>
+                      )}
                     </div>
                     {(!relatedData?.opportunities || relatedData.opportunities.length === 0) ? (
                       <div style={{ padding: '1.25rem', textAlign: 'center', color: 'var(--text-muted)', fontSize: '0.82rem' }}>No opportunities linked to this account.</div>
