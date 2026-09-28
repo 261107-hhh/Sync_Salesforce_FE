@@ -253,7 +253,7 @@ export default function ConnectionTab({ sfStatus, onStatusChange, onNavigateProf
             <Lock size={18} color="#38bdf8" />
             <div>
               <strong style={{ color: '#fff' }}>Shared Organization Connection: </strong>
-              Salesforce integration is managed by Organization Administrators. As a <strong>{activeOrgRole}</strong>, you automatically use this shared connection to sync records.
+              Salesforce integration is managed by Organization Administrators. You automatically use this shared connection to sync records.
             </div>
           </div>
         )}
@@ -360,7 +360,7 @@ export default function ConnectionTab({ sfStatus, onStatusChange, onNavigateProf
                   type="text"
                   required
                   disabled={!isManager}
-                  placeholder="3MVG9lKcPoNInDA..."
+                  placeholder="consumer key..."
                   className="form-input"
                   value={clientId}
                   autoComplete="off"

@@ -7,17 +7,21 @@ import {
   LogOut,
   User,
   Building2,
-  FileText
+  FileText,
+  Star
 } from 'lucide-react';
 
 export default function Navbar({ activeTab, setActiveTab, sfStatus }) {
   const {
     user,
     logout,
+    defaultOrgId,
     activeOrgId,
     activeOrgName,
     activeOrgRole
   } = useAuth();
+
+  const isAdminOrHigher = activeOrgRole === 'ADMIN' || activeOrgRole === 'OWNER';
 
   const getRoleBadge = (role) => {
     switch (role) {
@@ -179,17 +183,19 @@ export default function Navbar({ activeTab, setActiveTab, sfStatus }) {
             >
               <User size={14} />
               <span style={{ fontWeight: 600 }}>{user.name}</span>
-              <span style={{
-                fontSize: '0.66rem',
-                fontWeight: 700,
-                color: roleStyle.color,
-                background: roleStyle.bg,
-                border: `1px solid ${roleStyle.border}`,
-                padding: '1px 5px',
-                borderRadius: 4
-              }}>
-                {roleStyle.label}
-              </span>
+              {activeOrgRole && (
+                <span style={{
+                  fontSize: '0.66rem',
+                  fontWeight: 700,
+                  color: roleStyle.color,
+                  background: roleStyle.bg,
+                  border: `1px solid ${roleStyle.border}`,
+                  padding: '1px 5px',
+                  borderRadius: 4
+                }}>
+                  {roleStyle.label}
+                </span>
+              )}
             </button>
           )}
 

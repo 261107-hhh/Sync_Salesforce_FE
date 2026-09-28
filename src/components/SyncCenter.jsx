@@ -18,8 +18,33 @@ import {
   ArrowRight,
   CheckCircle2,
   XCircle,
-  ExternalLink
+  ExternalLink,
+  Calendar
 } from 'lucide-react';
+
+const getTodayDateString = () => {
+  const d = new Date();
+  const year = d.getFullYear();
+  const month = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+};
+
+const formatDateOffset = (daysAgo) => {
+  const d = new Date();
+  d.setDate(d.getDate() - daysAgo);
+  const year = d.getFullYear();
+  const month = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+};
+
+const getStartOfMonthString = () => {
+  const d = new Date();
+  const year = d.getFullYear();
+  const month = String(d.getMonth() + 1).padStart(2, '0');
+  return `${year}-${month}-01`;
+};
 
 export default function SyncCenter({ sfStatus, onNavigateToConnection, onNavigateToLogs }) {
   const { activeOrgId, activeOrgName, activeOrgRole } = useAuth();
@@ -27,6 +52,8 @@ export default function SyncCenter({ sfStatus, onNavigateToConnection, onNavigat
 
   const [selectedObjects, setSelectedObjects] = useState(['Account', 'Contact', 'Opportunity', 'Lead']);
   const [syncMode, setSyncMode] = useState('incremental');
+  const [fromDate, setFromDate] = useState('');
+  const [toDate, setToDate] = useState(getTodayDateString());
   const [showFilters, setShowFilters] = useState(false);
   const [nameFilter, setNameFilter] = useState('');
   const [syncStatus, setSyncStatus] = useState(null);
@@ -101,6 +128,11 @@ export default function SyncCenter({ sfStatus, onNavigateToConnection, onNavigat
       const filters = {};
       if (nameFilter.trim()) filters.nameContains = nameFilter.trim();
 
+      if (syncMode === 'incremental') {
+        if (fromDate) filters.fromDate = fromDate;
+        if (toDate) filters.toDate = toDate;
+      }
+
       await api.post('/api/sync/run', {
         objects: targetObjects,
         mode: syncMode,
@@ -131,9 +163,17 @@ export default function SyncCenter({ sfStatus, onNavigateToConnection, onNavigat
   const handleRetryFailed = async (objList) => {
     setRetryingObject(objList.join(', '));
     try {
+      const filters = {};
+      if (nameFilter.trim()) filters.nameContains = nameFilter.trim();
+      if (syncMode === 'incremental') {
+        if (fromDate) filters.fromDate = fromDate;
+        if (toDate) filters.toDate = toDate;
+      }
+
       await api.post('/api/sync/run', {
         objects: objList,
-        mode: syncMode
+        mode: syncMode,
+        filters
       });
       fetchStatus();
     } catch (err) {
@@ -147,7 +187,7 @@ export default function SyncCenter({ sfStatus, onNavigateToConnection, onNavigat
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-      
+
       {/* Disconnected Warning Notice */}
       {sfStatus && !sfStatus.connected && (
         <div style={{
@@ -235,7 +275,7 @@ export default function SyncCenter({ sfStatus, onNavigateToConnection, onNavigat
 
       {/* Top Grid: Controls + Clean Overview */}
       <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr', gap: '1.5rem' }}>
-        
+
         {/* Controls Card */}
         <div className="card">
           <h2 style={{ fontSize: '1.15rem', fontWeight: 700, marginBottom: '1rem', color: '#fff' }}>
@@ -299,6 +339,176 @@ export default function SyncCenter({ sfStatus, onNavigateToConnection, onNavigat
             </div>
           </div>
 
+          {/* Incremental Query Window (Date Range) */}
+          {syncMode === 'incremental' && (
+            <div style={{
+              marginBottom: '1.25rem',
+              padding: '1rem',
+              borderRadius: 'var(--radius-md)',
+              background: 'linear-gradient(180deg, rgba(56, 189, 248, 0.07) 0%, rgba(15, 23, 42, 0.4) 100%)',
+              border: '1px solid rgba(56, 189, 248, 0.25)',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '0.85rem'
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                  <Calendar size={16} color="#38bdf8" />
+                  <span style={{ fontSize: '0.85rem', fontWeight: 600, color: '#fff' }}>
+                    Incremental Query Date Range
+                  </span>
+                </div>
+                <span style={{
+                  fontSize: '0.7rem',
+                  color: '#38bdf8',
+                  background: 'rgba(56, 189, 248, 0.12)',
+                  padding: '0.15rem 0.55rem',
+                  borderRadius: '9999px',
+                  border: '1px solid rgba(56, 189, 248, 0.25)',
+                  fontWeight: 500
+                }}>
+                  SOQL Query Filter
+                </span>
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.85rem' }}>
+                {/* From Date */}
+                <div>
+                  <label className="form-label" style={{ fontSize: '0.78rem', marginBottom: '0.35rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                    <span>Sync From Date</span>
+                    {fromDate && (
+                      <button
+                        type="button"
+                        onClick={() => setFromDate('')}
+                        style={{ background: 'none', border: 'none', color: 'var(--text-muted)', fontSize: '0.7rem', cursor: 'pointer', padding: 0 }}
+                        title="Clear from date (uses last sync timestamp)"
+                      >
+                        Reset
+                      </button>
+                    )}
+                  </label>
+                  <input
+                    type="date"
+                    className="form-input"
+                    value={fromDate}
+                    max={toDate || undefined}
+                    onChange={(e) => setFromDate(e.target.value)}
+                    style={{ fontSize: '0.82rem', padding: '0.45rem 0.65rem' }}
+                  />
+                  <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', marginTop: '0.3rem' }}>
+                    {fromDate ? `From: ${fromDate} 00:00:00 UTC` : 'Empty = Delta from last sync'}
+                  </div>
+                </div>
+
+                {/* To Date */}
+                <div>
+                  <label className="form-label" style={{ fontSize: '0.78rem', marginBottom: '0.35rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                    <span>Sync To Date</span>
+                    <button
+                      type="button"
+                      onClick={() => setToDate(getTodayDateString())}
+                      style={{ background: 'none', border: 'none', color: '#38bdf8', fontSize: '0.7rem', cursor: 'pointer', padding: 0 }}
+                      title="Set to today"
+                    >
+                      Today
+                    </button>
+                  </label>
+                  <input
+                    type="date"
+                    className="form-input"
+                    value={toDate}
+                    min={fromDate || undefined}
+                    onChange={(e) => setToDate(e.target.value)}
+                    style={{ fontSize: '0.82rem', padding: '0.45rem 0.65rem' }}
+                  />
+                  <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', marginTop: '0.3rem' }}>
+                    {toDate === getTodayDateString() ? 'Defaulted to current date' : `Up to: ${toDate} 23:59:59 UTC`}
+                  </div>
+                </div>
+              </div>
+
+              {/* Quick Presets */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', flexWrap: 'wrap', paddingTop: '0.2rem' }}>
+                <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)', marginRight: '0.2rem' }}>Presets:</span>
+                <button
+                  type="button"
+                  onClick={() => { setFromDate(formatDateOffset(7)); setToDate(getTodayDateString()); }}
+                  className="btn btn-secondary btn-sm"
+                  style={{ fontSize: '0.7rem', padding: '0.2rem 0.5rem', height: 'auto' }}
+                >
+                  Last 7 Days
+                </button>
+                <button
+                  type="button"
+                  onClick={() => { setFromDate(formatDateOffset(30)); setToDate(getTodayDateString()); }}
+                  className="btn btn-secondary btn-sm"
+                  style={{ fontSize: '0.7rem', padding: '0.2rem 0.5rem', height: 'auto' }}
+                >
+                  Last 30 Days
+                </button>
+                <button
+                  type="button"
+                  onClick={() => { setFromDate(getStartOfMonthString()); setToDate(getTodayDateString()); }}
+                  className="btn btn-secondary btn-sm"
+                  style={{ fontSize: '0.7rem', padding: '0.2rem 0.5rem', height: 'auto' }}
+                >
+                  This Month
+                </button>
+                <button
+                  type="button"
+                  onClick={() => { setFromDate(''); setToDate(getTodayDateString()); }}
+                  className="btn btn-secondary btn-sm"
+                  style={{ fontSize: '0.7rem', padding: '0.2rem 0.5rem', height: 'auto' }}
+                >
+                  Auto Delta (Since Last Run)
+                </button>
+              </div>
+
+              {/* Dynamic SOQL WHERE preview */}
+              <div style={{
+                background: 'rgba(0, 0, 0, 0.35)',
+                padding: '0.45rem 0.65rem',
+                borderRadius: 'var(--radius-sm)',
+                border: '1px solid var(--border-subtle)',
+                fontSize: '0.72rem',
+                color: '#94a3b8',
+                fontFamily: 'monospace',
+                overflowX: 'auto',
+                whiteSpace: 'nowrap'
+              }}>
+                <span style={{ color: '#38bdf8', fontWeight: 600 }}>WHERE </span>
+                {fromDate
+                  ? `LastModifiedDate >= ${fromDate}T00:00:00Z`
+                  : `SystemModstamp > [LastSyncTimestamp]`}
+                {toDate && ` AND LastModifiedDate <= ${toDate}T23:59:59Z`}
+                {nameFilter.trim() && ` AND Name LIKE '%${nameFilter.trim()}%'`}
+              </div>
+
+              {/* Date validation alert if fromDate > toDate */}
+              {fromDate && toDate && fromDate > toDate && (
+                <div style={{ color: '#f87171', fontSize: '0.74rem', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                  <AlertCircle size={13} />
+                  <span>"Sync From Date" cannot be later than "Sync To Date".</span>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Full Snapshot info notice */}
+          {syncMode === 'full' && (
+            <div style={{
+              marginBottom: '1.25rem',
+              padding: '0.65rem 0.85rem',
+              borderRadius: 'var(--radius-md)',
+              background: 'rgba(255, 255, 255, 0.02)',
+              border: '1px solid var(--border-subtle)',
+              fontSize: '0.78rem',
+              color: 'var(--text-muted)'
+            }}>
+              Full Snapshot syncs all records from Salesforce without date boundaries.
+            </div>
+          )}
+
           {/* Query Filters Collapsible */}
           <div style={{ marginBottom: '1.5rem' }}>
             <button
@@ -318,7 +528,7 @@ export default function SyncCenter({ sfStatus, onNavigateToConnection, onNavigat
               }}
             >
               <span style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                <Filter size={14} /> Query Filters (SOQL WHERE)
+                <Filter size={14} /> Additional Filters (SOQL Name)
               </span>
               {showFilters ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
             </button>
@@ -345,42 +555,30 @@ export default function SyncCenter({ sfStatus, onNavigateToConnection, onNavigat
             )}
           </div>
 
-          {/* Trigger Button */}
-          {isReadOnly ? (
-            <div style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '0.5rem',
+          {/* Trigger Button - Available to all authenticated organization members including ReadOnly */}
+          <button
+            onClick={() => handleStartSync()}
+            disabled={
+              isRunning ||
+              selectedObjects.length === 0 ||
+              loading ||
+              (sfStatus && !sfStatus.connected) ||
+              Boolean(syncMode === 'incremental' && fromDate && toDate && fromDate > toDate)
+            }
+            className={`btn ${sfStatus && !sfStatus.connected ? 'btn-secondary' : 'btn-primary'}`}
+            style={{
+              width: '100%',
               padding: '0.75rem',
-              borderRadius: 'var(--radius-md)',
-              background: 'rgba(255, 255, 255, 0.04)',
-              border: '1px solid var(--border-color)',
-              color: 'var(--text-muted)',
-              fontSize: '0.82rem',
-              justifyContent: 'center'
-            }}>
-              <Lock size={15} />
-              <span>Sync execution requires Member or Admin privileges in this organization.</span>
-            </div>
-          ) : (
-            <button
-              onClick={() => handleStartSync()}
-              disabled={isRunning || selectedObjects.length === 0 || loading || (sfStatus && !sfStatus.connected)}
-              className={`btn ${sfStatus && !sfStatus.connected ? 'btn-secondary' : 'btn-primary'}`}
-              style={{
-                width: '100%',
-                padding: '0.75rem',
-                opacity: (sfStatus && !sfStatus.connected) ? 0.6 : 1,
-                cursor: (sfStatus && !sfStatus.connected) ? 'not-allowed' : 'pointer'
-              }}
-              title={sfStatus && !sfStatus.connected ? 'Salesforce is disconnected. Connect in Settings first.' : ''}
-            >
-              <Play size={16} />
-              {sfStatus && !sfStatus.connected
-                ? 'Salesforce Disconnected — Sync Disabled'
-                : (isRunning ? 'Syncing in background...' : 'Start Synchronization Now')}
-            </button>
-          )}
+              opacity: (sfStatus && !sfStatus.connected) ? 0.6 : 1,
+              cursor: (sfStatus && !sfStatus.connected) ? 'not-allowed' : 'pointer'
+            }}
+            title={sfStatus && !sfStatus.connected ? 'Salesforce is disconnected. Connect in Settings first.' : ''}
+          >
+            <Play size={16} />
+            {sfStatus && !sfStatus.connected
+              ? 'Salesforce Disconnected — Sync Disabled'
+              : (isRunning ? 'Syncing in background...' : 'Start Synchronization Now')}
+          </button>
         </div>
 
         {/* Sync Summary & Quick Link Card (No terminal clutter) */}
@@ -415,7 +613,7 @@ export default function SyncCenter({ sfStatus, onNavigateToConnection, onNavigat
           {/* Quick Metrics */}
           <div style={{
             display: 'grid',
-            gridTemplateColumns: 'repeat(2, 1fr)',
+            gridTemplateColumns: (syncStatus?.filters?.fromDate || syncStatus?.filters?.toDate) ? 'repeat(3, 1fr)' : 'repeat(2, 1fr)',
             gap: '0.75rem',
             marginBottom: '1.25rem'
           }}>
@@ -431,6 +629,14 @@ export default function SyncCenter({ sfStatus, onNavigateToConnection, onNavigat
                 {syncStatus?.mode ? syncStatus.mode.toUpperCase() : 'DELTA'}
               </div>
             </div>
+            {(syncStatus?.filters?.fromDate || syncStatus?.filters?.toDate) && (
+              <div style={{ background: 'rgba(255, 255, 255, 0.02)', border: '1px solid var(--border-color)', borderRadius: 'var(--radius-md)', padding: '0.75rem' }}>
+                <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', textTransform: 'uppercase' }}>Query Window</span>
+                <div style={{ fontSize: '0.78rem', fontWeight: 600, color: '#38bdf8', marginTop: '0.35rem', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={`${syncStatus?.filters?.fromDate || 'Delta'} → ${syncStatus?.filters?.toDate || 'Today'}`}>
+                  {syncStatus?.filters?.fromDate ? syncStatus.filters.fromDate : 'Delta'} → {syncStatus?.filters?.toDate ? syncStatus.filters.toDate : 'Today'}
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Object Health Pills */}

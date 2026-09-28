@@ -135,10 +135,12 @@ export default function AcceptInviteModal({ token, onJoined, onCancel }) {
                 <span style={{ color: 'var(--text-muted)' }}>Email:</span>
                 <span style={{ fontFamily: 'var(--font-mono)', color: '#38bdf8' }}>{inviteInfo?.email}</span>
               </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.35rem' }}>
-                <span style={{ color: 'var(--text-muted)' }}>Assigned Role:</span>
-                <span className="badge badge-info">{inviteInfo?.role || 'MEMBER'}</span>
-              </div>
+              {inviteInfo?.role && (
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.35rem' }}>
+                  <span style={{ color: 'var(--text-muted)' }}>Assigned Role:</span>
+                  <span className="badge badge-info">{inviteInfo.role}</span>
+                </div>
+              )}
               {inviteInfo?.invitedBy && (
                 <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                   <span style={{ color: 'var(--text-muted)' }}>Invited By:</span>

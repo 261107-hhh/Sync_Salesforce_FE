@@ -189,7 +189,10 @@ export default function TeamManagement() {
                   Team & Organization Members
                 </h2>
                 <p style={{ fontSize: '0.82rem', color: 'var(--text-secondary)' }}>
-                  Workspace: <strong style={{ color: '#fff' }}>{activeOrgName || activeOrgId}</strong> • Your Role: <span className={`badge ${getRoleBadgeClass(activeOrgRole)}`}>{activeOrgRole}</span>
+                  Workspace: <strong style={{ color: '#fff' }}>{activeOrgName || activeOrgId}</strong>
+                  {activeOrgRole && (
+                    <> • Your Role: <span className={`badge ${getRoleBadgeClass(activeOrgRole)}`}>{activeOrgRole}</span></>
+                  )}
                 </p>
               </div>
             </div>
@@ -261,9 +264,9 @@ export default function TeamManagement() {
             </thead>
             <tbody>
               {loading && members.length === 0 ? (
-                <tr><td colSpan={6} style={{ textAlign: 'center', padding: '2.5rem', color: 'var(--text-muted)' }}>Loading team members...</td></tr>
+                <tr><td colSpan={isManager ? 6 : 5} style={{ textAlign: 'center', padding: '2.5rem', color: 'var(--text-muted)' }}>Loading team members...</td></tr>
               ) : members.length === 0 ? (
-                <tr><td colSpan={6} style={{ textAlign: 'center', padding: '2.5rem', color: 'var(--text-muted)' }}>No members found in this workspace.</td></tr>
+                <tr><td colSpan={isManager ? 6 : 5} style={{ textAlign: 'center', padding: '2.5rem', color: 'var(--text-muted)' }}>No members found in this workspace.</td></tr>
               ) : (
                 members.map((m) => {
                   const isSelf = m.userId === user?.id || m.email === user?.email;
@@ -301,20 +304,30 @@ export default function TeamManagement() {
                         </span>
                       </td>
                       <td>
-                        {canManageThis ? (
-                          <select
-                            className="form-select"
-                            style={{ padding: '0.25rem 0.65rem', fontSize: '0.78rem', width: 130 }}
-                            value={m.role}
-                            onChange={(e) => handleRoleChange(m.userId, e.target.value)}
-                          >
-                            <option value="ADMIN">ADMIN</option>
-                            <option value="MEMBER">MEMBER</option>
-                            <option value="READONLY">READONLY</option>
-                          </select>
+                        {isSelf ? (
+                          <span className={`badge ${getRoleBadgeClass(m.role || activeOrgRole)}`}>
+                            {m.role || activeOrgRole} (You)
+                          </span>
+                        ) : isManager ? (
+                          canManageThis ? (
+                            <select
+                              className="form-select"
+                              style={{ padding: '0.25rem 0.65rem', fontSize: '0.78rem', width: 130 }}
+                              value={m.role}
+                              onChange={(e) => handleRoleChange(m.userId, e.target.value)}
+                            >
+                              <option value="ADMIN">ADMIN</option>
+                              <option value="MEMBER">MEMBER</option>
+                              <option value="READONLY">READONLY</option>
+                            </select>
+                          ) : (
+                            <span className={`badge ${getRoleBadgeClass(m.role)}`}>
+                              {m.role}
+                            </span>
+                          )
                         ) : (
-                          <span className={`badge ${getRoleBadgeClass(m.role)}`}>
-                            {m.role}
+                          <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }} title="Visible to Admins only">
+                            —
                           </span>
                         )}
                       </td>

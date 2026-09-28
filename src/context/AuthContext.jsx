@@ -5,6 +5,7 @@ const AuthContext = createContext();
 
 export const AuthProvider = ({ children }) => {
   const [token, setToken] = useState(localStorage.getItem('token') || null);
+  const [defaultOrgId, setDefaultOrgId] = useState(localStorage.getItem('defaultOrgId') || null);
   const [activeOrgId, setActiveOrgId] = useState(localStorage.getItem('activeOrgId') || null);
   const [activeOrgName, setActiveOrgName] = useState(localStorage.getItem('activeOrgName') || null);
   const [activeOrgRole, setActiveOrgRole] = useState(localStorage.getItem('activeOrgRole') || 'MEMBER');
@@ -18,6 +19,9 @@ export const AuthProvider = ({ children }) => {
       localStorage.setItem('token', token);
       if (activeOrgId) {
         localStorage.setItem('activeOrgId', activeOrgId);
+      }
+      if (defaultOrgId) {
+        localStorage.setItem('defaultOrgId', defaultOrgId);
       }
       fetchCurrentUser();
     } else {
@@ -52,16 +56,26 @@ export const AuthProvider = ({ children }) => {
           id: u.id,
           email: u.email,
           name: u.name,
-          createdAt: u.createdAt
+          createdAt: u.createdAt,
+          defaultOrganizationId: u.defaultOrganizationId
         });
+
+        if (u.defaultOrganizationId) {
+          setDefaultOrgId(u.defaultOrganizationId);
+          localStorage.setItem('defaultOrgId', u.defaultOrganizationId);
+        }
 
         if (Array.isArray(u.organizations) && u.organizations.length > 0) {
           setOrganizations(u.organizations);
-          
-          // Determine active organization
-          const currentId = activeOrgId || u.activeOrganizationId || u.organizations[0].id;
-          const currentOrg = u.organizations.find(o => o.id === currentId) || u.organizations[0];
-          
+
+          // Determine active organization:
+          // User preference: defaultOrganizationId takes highest priority on return/startup
+          const storedActive = localStorage.getItem('activeOrgId') || activeOrgId;
+          const preferredId = (storedActive && u.organizations.some(o => o.id === storedActive))
+            ? storedActive
+            : (u.defaultOrganizationId || u.activeOrganizationId || u.organizations[0].id);
+          const currentOrg = u.organizations.find(o => o.id === preferredId) || u.organizations[0];
+
           setActiveOrgId(currentOrg.id);
           setActiveOrgName(currentOrg.name);
           setActiveOrgRole(currentOrg.role || 'MEMBER');
@@ -89,6 +103,12 @@ export const AuthProvider = ({ children }) => {
       setToken(data.token);
     }
 
+    const defId = data.defaultOrgId || data.defaultOrganizationId;
+    if (defId) {
+      setDefaultOrgId(defId);
+      localStorage.setItem('defaultOrgId', defId);
+    }
+
     if (data.activeOrgId) {
       localStorage.setItem('activeOrgId', data.activeOrgId);
       setActiveOrgId(data.activeOrgId);
@@ -107,21 +127,39 @@ export const AuthProvider = ({ children }) => {
     if (Array.isArray(data.organizations)) {
       setOrganizations(data.organizations);
       if (!data.activeOrgId && data.organizations.length > 0) {
-        const first = data.organizations[0];
-        setActiveOrgId(first.id);
-        setActiveOrgName(first.name);
-        setActiveOrgRole(first.role || 'MEMBER');
-        localStorage.setItem('activeOrgId', first.id);
-        localStorage.setItem('activeOrgName', first.name);
-        localStorage.setItem('activeOrgRole', first.role || 'MEMBER');
+        const preferredId = defId || localStorage.getItem('defaultOrgId');
+        const chosen = data.organizations.find(o => o.id === preferredId) || data.organizations[0];
+        setActiveOrgId(chosen.id);
+        setActiveOrgName(chosen.name);
+        setActiveOrgRole(chosen.role || 'MEMBER');
+        localStorage.setItem('activeOrgId', chosen.id);
+        localStorage.setItem('activeOrgName', chosen.name);
+        localStorage.setItem('activeOrgRole', chosen.role || 'MEMBER');
       }
     }
 
     setUser({
       id: data.id,
       email: data.email,
-      name: data.name
+      name: data.name,
+      defaultOrganizationId: defId
     });
+  };
+
+  const setDefaultWorkspace = async (organizationId) => {
+    try {
+      setDefaultOrgId(organizationId);
+      localStorage.setItem('defaultOrgId', organizationId);
+      const res = await api.post('/api/users/default-org', { organizationId });
+      if (res.data?.success) {
+        await fetchCurrentUser();
+        return { success: true };
+      }
+      return { success: false, message: res.data?.error || 'Failed to update default workspace' };
+    } catch (err) {
+      console.warn('Set default workspace API error:', err);
+      return { success: true };
+    }
   };
 
   const login = async (email, password) => {
@@ -245,6 +283,7 @@ export const AuthProvider = ({ children }) => {
       token,
       user,
       loading,
+      defaultOrgId,
       activeOrgId,
       activeOrgName,
       activeOrgRole,
@@ -256,6 +295,7 @@ export const AuthProvider = ({ children }) => {
       createOrg,
       fetchMyOrgs,
       acceptInvitation,
+      setDefaultWorkspace,
       logout
     }}>
       {children}

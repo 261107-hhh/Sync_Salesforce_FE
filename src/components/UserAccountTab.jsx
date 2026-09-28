@@ -21,7 +21,8 @@ import {
   KeyRound,
   ShieldCheck,
   Zap,
-  Unlink
+  Unlink,
+  Star
 } from 'lucide-react';
 
 export default function UserAccountTab({
@@ -33,17 +34,35 @@ export default function UserAccountTab({
   const {
     user,
     logout,
+    defaultOrgId,
     activeOrgId,
     activeOrgName,
     activeOrgRole,
     organizations,
-    switchOrg
+    switchOrg,
+    setDefaultWorkspace
   } = useAuth();
+
+  const isAdminOrHigher = activeOrgRole === 'ADMIN' || activeOrgRole === 'OWNER';
 
   const [subTab, setSubTab] = useState(initialSubTab);
   const [switchingId, setSwitchingId] = useState(null);
+  const [settingDefaultId, setSettingDefaultId] = useState(null);
   const [mockConnecting, setMockConnecting] = useState(false);
   const [mockFeedback, setMockFeedback] = useState(null);
+
+  const handleSetDefaultOrg = async (orgId) => {
+    setSettingDefaultId(orgId);
+    try {
+      if (setDefaultWorkspace) {
+        await setDefaultWorkspace(orgId);
+      }
+    } catch (e) {
+      console.warn('Could not set default workspace:', e);
+    } finally {
+      setSettingDefaultId(null);
+    }
+  };
 
   const handleConnectMock = async () => {
     if (activeOrgRole !== 'OWNER' && activeOrgRole !== 'ADMIN') {
@@ -277,9 +296,9 @@ export default function UserAccountTab({
           </div>
 
           <div style={{ background: 'rgba(255, 255, 255, 0.02)', padding: '0.65rem 0.85rem', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-color)' }}>
-            <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)', textTransform: 'uppercase' }}>Role Permissions</span>
+            <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)', textTransform: 'uppercase' }}>Your Workspace Role</span>
             <div style={{ fontSize: '0.9rem', fontWeight: 600, color: roleStyle.color, marginTop: '0.2rem' }}>
-              {activeOrgRole} ({activeOrgRole === 'OWNER' || activeOrgRole === 'ADMIN' ? 'Full Control' : (activeOrgRole === 'MEMBER' ? 'Read / Write' : 'Read Only')})
+              {activeOrgRole} ({activeOrgRole === 'OWNER' || activeOrgRole === 'ADMIN' ? 'Full Control' : (activeOrgRole === 'MEMBER' ? 'Read / Write' : 'Read Only & Sync')})
             </div>
           </div>
 
@@ -419,6 +438,7 @@ export default function UserAccountTab({
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '1rem' }}>
               {organizations.map((org) => {
                 const isSelected = org.id === activeOrgId;
+                const isDefault = org.id === defaultOrgId;
                 const orgRoleStyle = getRoleBadge(org.role);
 
                 return (
@@ -445,11 +465,27 @@ export default function UserAccountTab({
                             {org.name}
                           </h4>
                         </div>
-                        {isSelected && (
-                          <span className="badge badge-info" style={{ fontSize: '0.68rem' }}>
-                            ACTIVE
-                          </span>
-                        )}
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                          {isDefault && (
+                            <span className="badge" style={{
+                              fontSize: '0.68rem',
+                              background: 'rgba(245, 158, 11, 0.15)',
+                              color: '#fbbf24',
+                              border: '1px solid rgba(245, 158, 11, 0.4)',
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: '3px',
+                              fontWeight: 700
+                            }}>
+                              <Star size={10} fill="#fbbf24" /> DEFAULT
+                            </span>
+                          )}
+                          {isSelected && (
+                            <span className="badge badge-info" style={{ fontSize: '0.68rem' }}>
+                              ACTIVE
+                            </span>
+                          )}
+                        </div>
                       </div>
 
                       <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap', marginTop: '0.4rem' }}>
@@ -462,7 +498,7 @@ export default function UserAccountTab({
                           padding: '1px 6px',
                           borderRadius: 4
                         }}>
-                          {org.role || 'MEMBER'}
+                          Your Role: {org.role || 'MEMBER'}
                         </span>
 
                         <span style={{
@@ -484,10 +520,33 @@ export default function UserAccountTab({
                       )}
                     </div>
 
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingTop: '0.75rem', borderTop: '1px solid var(--border-subtle)' }}>
-                      <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>
-                        Org ID: {org.id}
-                      </span>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '0.5rem', paddingTop: '0.75rem', borderTop: '1px solid var(--border-subtle)' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                        <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>
+                          Org ID: {org.id}
+                        </span>
+                        {!isDefault && (
+                          <button
+                            type="button"
+                            onClick={() => handleSetDefaultOrg(org.id)}
+                            disabled={settingDefaultId === org.id}
+                            className="btn btn-secondary btn-sm"
+                            style={{
+                              fontSize: '0.7rem',
+                              padding: '0.15rem 0.5rem',
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: '0.25rem',
+                              color: '#fbbf24',
+                              borderColor: 'rgba(245, 158, 11, 0.3)'
+                            }}
+                            title="Make this workspace default upon login"
+                          >
+                            <Star size={11} />
+                            {settingDefaultId === org.id ? 'Setting...' : 'Set as Default'}
+                          </button>
+                        )}
+                      </div>
                       {isSelected ? (
                         <span style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', color: '#38bdf8', fontSize: '0.8rem', fontWeight: 600 }}>
                           <Check size={14} /> Currently Selected
@@ -576,17 +635,17 @@ export default function UserAccountTab({
                 </div>
 
                 <div className="form-group">
-                  <label className="form-label">Active Workspace Role</label>
+                  <label className="form-label">Your Workspace Role</label>
                   <input type="text" className="form-input" value={activeOrgRole || 'MEMBER'} readOnly />
                 </div>
               </div>
             </div>
           </div>
 
-          {/* Role Permissions Matrix */}
+          {/* Role Permissions Matrix - Informs user of their own permissions */}
           <div className="card">
             <h3 style={{ fontSize: '1.1rem', fontWeight: 700, color: '#fff', marginBottom: '1.25rem' }}>
-              Permissions in {activeOrgName || 'Workspace'}
+              Your Role Permissions ({activeOrgRole || 'MEMBER'})
             </h3>
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
@@ -604,9 +663,7 @@ export default function UserAccountTab({
 
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0.65rem 0.85rem', background: 'rgba(255, 255, 255, 0.02)', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-subtle)' }}>
                 <span style={{ fontSize: '0.85rem' }}>Trigger Sync & Retries</span>
-                <span style={{ color: activeOrgRole !== 'READONLY' ? '#34d399' : '#f87171', fontSize: '0.78rem', fontWeight: 600 }}>
-                  {activeOrgRole !== 'READONLY' ? '✓ Granted' : '✕ Restricted'}
-                </span>
+                <span style={{ color: '#34d399', fontSize: '0.78rem', fontWeight: 600 }}>✓ Granted</span>
               </div>
 
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0.65rem 0.85rem', background: 'rgba(255, 255, 255, 0.02)', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-subtle)' }}>

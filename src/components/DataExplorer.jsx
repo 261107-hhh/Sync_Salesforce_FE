@@ -308,12 +308,6 @@ export default function DataExplorer({ onOpenDetails, onOpenCreate, onOpenEdit, 
                 New {activeTable}
               </button>
             )}
-
-            {isReadOnly && (
-              <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', display: 'inline-flex', alignItems: 'center', gap: '0.35rem' }}>
-                <Lock size={13} /> Read-only
-              </span>
-            )}
           </div>
         </div>
 
