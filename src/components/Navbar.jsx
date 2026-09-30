@@ -1,5 +1,6 @@
 import React from 'react';
 import { useAuth } from '../context/AuthContext';
+import { useTheme } from '../context/ThemeContext';
 import {
   Cloud,
   Database,
@@ -8,8 +9,11 @@ import {
   User,
   Building2,
   FileText,
-  Star
+  Star,
+  Sun,
+  Moon
 } from 'lucide-react';
+import OodlesLogo from './OodlesLogo';
 
 export default function Navbar({ activeTab, setActiveTab, sfStatus }) {
   const {
@@ -20,6 +24,7 @@ export default function Navbar({ activeTab, setActiveTab, sfStatus }) {
     activeOrgName,
     activeOrgRole
   } = useAuth();
+  const { isDark, toggleTheme } = useTheme();
 
   const isAdminOrHigher = activeOrgRole === 'ADMIN' || activeOrgRole === 'OWNER';
 
@@ -28,7 +33,7 @@ export default function Navbar({ activeTab, setActiveTab, sfStatus }) {
       case 'OWNER':
         return { label: 'OWNER', color: '#c084fc', bg: 'rgba(192, 132, 252, 0.15)', border: 'rgba(192, 132, 252, 0.3)' };
       case 'ADMIN':
-        return { label: 'ADMIN', color: '#38bdf8', bg: 'rgba(56, 189, 248, 0.15)', border: 'rgba(56, 189, 248, 0.3)' };
+        return { label: 'ADMIN', color: '#2F83C5', bg: 'rgba(47, 131, 197, 0.15)', border: 'rgba(47, 131, 197, 0.35)' };
       case 'MEMBER':
         return { label: 'MEMBER', color: '#34d399', bg: 'rgba(52, 211, 153, 0.15)', border: 'rgba(52, 211, 153, 0.3)' };
       default:
@@ -40,12 +45,13 @@ export default function Navbar({ activeTab, setActiveTab, sfStatus }) {
 
   return (
     <header style={{
-      background: 'rgba(15, 23, 42, 0.85)',
+      background: 'var(--header-bg)',
       backdropFilter: 'blur(14px)',
-      borderBottom: '1px solid var(--border-color)',
+      borderBottom: '1px solid var(--header-border)',
       position: 'sticky',
       top: 0,
-      zIndex: 100
+      zIndex: 100,
+      transition: 'background-color 0.2s ease, border-color 0.2s ease'
     }}>
       <div style={{
         maxWidth: 1300,
@@ -60,27 +66,16 @@ export default function Navbar({ activeTab, setActiveTab, sfStatus }) {
         <div style={{ display: 'flex', alignItems: 'center', gap: '1.25rem' }}>
           <div
             onClick={() => setActiveTab('explorer')}
-            style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', cursor: 'pointer' }}
+            style={{ display: 'flex', alignItems: 'center', gap: '0.85rem', cursor: 'pointer' }}
             title="Go to Data Explorer"
           >
-            <div style={{
-              width: 36,
-              height: 36,
-              borderRadius: 10,
-              background: 'linear-gradient(135deg, #0284c7, #38bdf8)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              boxShadow: '0 4px 14px rgba(56, 189, 248, 0.3)'
-            }}>
-              <Cloud size={20} color="#fff" />
-            </div>
-            <div>
-              <h1 style={{ fontSize: '1rem', fontWeight: 700, letterSpacing: '-0.02em', color: '#fff', lineHeight: 1.2 }}>
+            <OodlesLogo height={28} isDark={isDark} />
+            <div style={{ borderLeft: '1px solid var(--border-color)', paddingLeft: '0.85rem' }}>
+              <h1 style={{ fontSize: '0.92rem', fontWeight: 700, letterSpacing: '-0.01em', color: 'var(--text-primary)', lineHeight: 1.2 }}>
                 SF Sync
               </h1>
-              <p style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>
-                Multi-Tenant Platform
+              <p style={{ fontSize: '0.68rem', color: 'var(--oodles-primary)', fontWeight: 600 }}>
+                Enterprise Hub
               </p>
             </div>
           </div>
@@ -93,7 +88,7 @@ export default function Navbar({ activeTab, setActiveTab, sfStatus }) {
               alignItems: 'center',
               gap: '0.5rem',
               padding: '0.35rem 0.75rem',
-              background: 'rgba(255, 255, 255, 0.04)',
+              background: 'var(--oodles-light)',
               border: '1px solid var(--border-color)',
               borderRadius: 'var(--radius-md)',
               color: 'var(--text-secondary)',
@@ -103,8 +98,8 @@ export default function Navbar({ activeTab, setActiveTab, sfStatus }) {
             }}
             title="Active workspace (Click to manage workspaces in Account)"
           >
-            <Building2 size={14} color="#38bdf8" />
-            <span style={{ fontWeight: 600, color: '#fff', maxWidth: 150, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+            <Building2 size={14} color="var(--oodles-primary)" />
+            <span style={{ fontWeight: 600, color: 'var(--text-primary)', maxWidth: 150, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
               {activeOrgName || activeOrgId || 'Default Organization'}
             </span>
           </div>
@@ -137,8 +132,8 @@ export default function Navbar({ activeTab, setActiveTab, sfStatus }) {
           </button>
         </nav>
 
-        {/* Right: Salesforce Status, User Account Button & Logout */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+        {/* Right: Salesforce Status, Theme Switcher, User Account Button & Logout */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
           {/* Salesforce Status Badge */}
           <div
             onClick={() => setActiveTab('account')}
@@ -148,11 +143,11 @@ export default function Navbar({ activeTab, setActiveTab, sfStatus }) {
               gap: '0.45rem',
               padding: '0.3rem 0.65rem',
               borderRadius: 'var(--radius-full)',
-              background: sfStatus?.connected ? 'rgba(52, 211, 153, 0.12)' : 'rgba(248, 113, 113, 0.12)',
-              border: `1px solid ${sfStatus?.connected ? 'rgba(52, 211, 153, 0.3)' : 'rgba(248, 113, 113, 0.3)'}`,
+              background: sfStatus?.connected ? 'var(--badge-success-bg)' : 'rgba(239, 68, 68, 0.12)',
+              border: `1px solid ${sfStatus?.connected ? 'var(--badge-success-border)' : 'rgba(239, 68, 68, 0.3)'}`,
               fontSize: '0.72rem',
-              fontWeight: 500,
-              color: sfStatus?.connected ? '#34d399' : '#f87171',
+              fontWeight: 600,
+              color: sfStatus?.connected ? 'var(--badge-success-text)' : 'var(--accent-red)',
               cursor: 'pointer'
             }}
             title="Salesforce Connection Status (Click to configure in Account)"
@@ -161,11 +156,26 @@ export default function Navbar({ activeTab, setActiveTab, sfStatus }) {
               width: 7,
               height: 7,
               borderRadius: '50%',
-              backgroundColor: sfStatus?.connected ? '#34d399' : '#f87171',
-              boxShadow: sfStatus?.connected ? '0 0 8px #34d399' : 'none'
+              backgroundColor: sfStatus?.connected ? '#00B27A' : '#EF4444',
+              boxShadow: sfStatus?.connected ? '0 0 8px #00B27A' : 'none'
             }} />
             {sfStatus?.connected ? (sfStatus.isMock ? 'Mock Sandbox' : 'SF Connected') : 'SF Disconnected'}
           </div>
+
+          {/* Theme Toggle Button */}
+          <button
+            type="button"
+            onClick={toggleTheme}
+            className="theme-toggle-btn"
+            title={isDark ? "Switch to Oodles Light Mode" : "Switch to Executive Dark Mode"}
+            aria-label="Toggle color theme"
+          >
+            {isDark ? (
+              <Sun size={16} color="#FBBF24" />
+            ) : (
+              <Moon size={16} color="#2F83C5" />
+            )}
+          </button>
 
           {/* User Account / Profile Button */}
           {user && (

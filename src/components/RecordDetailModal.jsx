@@ -157,11 +157,11 @@ export default function RecordDetailModal({
     if (val === null || val === undefined || val === '') {
       return (
         <span style={{
-          color: '#94a3b8',
+          color: 'var(--text-muted)',
           fontStyle: 'italic',
           fontSize: '0.76rem',
-          background: 'rgba(255, 255, 255, 0.04)',
-          border: '1px dashed rgba(255, 255, 255, 0.15)',
+          background: 'var(--table-header-bg)',
+          border: '1px dashed var(--border-color)',
           padding: '0.12rem 0.45rem',
           borderRadius: '4px',
           width: 'fit-content',
@@ -171,13 +171,13 @@ export default function RecordDetailModal({
         </span>
       );
     }
-    return <span style={{ color: '#fff', fontSize: '0.85rem', wordBreak: 'break-word', fontWeight: 500 }}>{String(val)}</span>;
+    return <span style={{ color: 'var(--text-primary)', fontSize: '0.85rem', wordBreak: 'break-word', fontWeight: 500 }}>{String(val)}</span>;
   };
 
   // Helper to render an individual field card with search filter support and redirection
   const renderField = (label, key, overrideVal = undefined) => {
     const val = overrideVal !== undefined ? overrideVal : (rec[key] !== undefined ? rec[key] : (rec[key.toLowerCase()] !== undefined ? rec[key.toLowerCase()] : null));
-    
+
     // Apply search filter if active
     if (fieldSearch) {
       const q = fieldSearch.toLowerCase();
@@ -189,7 +189,7 @@ export default function RecordDetailModal({
 
     return (
       <div key={label} style={{
-        background: 'rgba(255, 255, 255, 0.02)',
+        background: 'var(--table-header-bg)',
         border: '1px solid var(--border-color)',
         borderRadius: 'var(--radius-sm)',
         padding: '0.55rem 0.75rem',
@@ -205,7 +205,7 @@ export default function RecordDetailModal({
         {/* Interactive redirection links for relational fields */}
         {key === 'AccountId' && val && onOpenRecordDetails ? (
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.4rem', flexWrap: 'wrap' }}>
-            <span style={{ color: '#fff', fontSize: '0.85rem', fontFamily: 'var(--font-mono)', fontWeight: 500 }}>{String(val)}</span>
+            <span style={{ color: 'var(--text-primary)', fontSize: '0.85rem', fontFamily: 'var(--font-mono)', fontWeight: 500 }}>{String(val)}</span>
             <button
               type="button"
               className="btn btn-secondary btn-sm"
@@ -231,7 +231,7 @@ export default function RecordDetailModal({
           </div>
         ) : key === 'ReportsToId' && val && onOpenRecordDetails ? (
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.4rem', flexWrap: 'wrap' }}>
-            <span style={{ color: '#fff', fontSize: '0.85rem', fontFamily: 'var(--font-mono)', fontWeight: 500 }}>{String(val)}</span>
+            <span style={{ color: 'var(--text-primary)', fontSize: '0.85rem', fontFamily: 'var(--font-mono)', fontWeight: 500 }}>{String(val)}</span>
             <button
               type="button"
               className="btn btn-secondary btn-sm"
@@ -257,7 +257,7 @@ export default function RecordDetailModal({
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
             <div>
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
-                <h3 style={{ fontSize: '1.2rem', fontWeight: 700, color: '#fff', margin: 0 }}>
+                <h3 style={{ fontSize: '1.2rem', fontWeight: 700, color: 'var(--text-primary)', margin: 0 }}>
                   {rec.name || rec.Name || `${objectName} Record`}
                 </h3>
                 <span className={`badge ${isCustomAppCreated ? 'badge-info' : 'badge-primary'}`} style={{ fontSize: '0.7rem' }}>
@@ -367,10 +367,10 @@ export default function RecordDetailModal({
               }}
             >
               <Link2 size={15} />
-              Relationships & Linked Data
+              Linked Records
             </button>
 
-            <button
+            {/* <button
               type="button"
               onClick={() => setActiveTab('json')}
               style={{
@@ -389,7 +389,7 @@ export default function RecordDetailModal({
             >
               <Code size={15} />
               Raw Payload
-            </button>
+            </button> */}
           </div>
 
           {activeTab === 'fields' && (
@@ -404,10 +404,10 @@ export default function RecordDetailModal({
                   width: '100%',
                   padding: '0.3rem 0.5rem 0.3rem 1.8rem',
                   fontSize: '0.78rem',
-                  background: 'rgba(255, 255, 255, 0.05)',
+                  background: 'var(--bg-input)',
                   border: '1px solid var(--border-color)',
                   borderRadius: 'var(--radius-sm)',
-                  color: '#fff'
+                  color: 'var(--text-primary)'
                 }}
               />
               {searchQuery && (
@@ -442,7 +442,7 @@ export default function RecordDetailModal({
             </div>
           ) : activeTab === 'fields' ? (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
-              
+
               {/* PROMINENT CUSTOM APP MODIFIED BANNER */}
               {isModifiedInCustomApp ? (
                 <div style={{
@@ -452,23 +452,23 @@ export default function RecordDetailModal({
                   gap: '0.75rem',
                   padding: '0.75rem 1rem',
                   borderRadius: 'var(--radius-md)',
-                  background: 'linear-gradient(90deg, rgba(192, 132, 252, 0.15) 0%, rgba(168, 85, 247, 0.08) 100%)',
-                  border: '1px solid rgba(192, 132, 252, 0.4)'
+                  background: 'linear-gradient(90deg, var(--pill-purple-bg) 0%, var(--bg-card) 100%)',
+                  border: '1px solid var(--pill-purple-border)'
                 }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
-                    <div style={{ width: 30, height: 30, borderRadius: 6, background: 'rgba(192, 132, 252, 0.25)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                      <Edit3 size={16} color="#c084fc" />
+                    <div style={{ width: 30, height: 30, borderRadius: 6, background: 'var(--pill-purple-bg)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                      <Edit3 size={16} color="var(--pill-purple-text)" />
                     </div>
                     <div>
-                      <div style={{ fontSize: '0.88rem', fontWeight: 600, color: '#f3e8ff' }}>
-                        Modified in Custom App by: <span style={{ color: '#c084fc', textDecoration: 'underline' }}>{customAppModifiedBy}</span>
+                      <div style={{ fontSize: '0.88rem', fontWeight: 600, color: 'var(--text-primary)' }}>
+                        Modified in Custom App by: <span style={{ color: 'var(--accent-purple)', textDecoration: 'underline' }}>{customAppModifiedBy}</span>
                       </div>
-                      <div style={{ fontSize: '0.74rem', color: '#d8b4fe' }}>
+                      <div style={{ fontSize: '0.74rem', color: 'var(--text-muted)' }}>
                         Timestamp: {customAppModifiedAt ? new Date(customAppModifiedAt).toLocaleString() : 'Recent update'}
                       </div>
                     </div>
                   </div>
-                  <span className="badge" style={{ background: 'rgba(192, 132, 252, 0.2)', border: '1px solid rgba(192, 132, 252, 0.5)', color: '#e9d5ff', fontSize: '0.72rem' }}>
+                  <span className="badge" style={{ background: 'var(--pill-purple-bg)', border: '1px solid var(--pill-purple-border)', color: 'var(--pill-purple-text)', fontSize: '0.72rem' }}>
                     Custom App Audit Verified
                   </span>
                 </div>
@@ -479,8 +479,8 @@ export default function RecordDetailModal({
                 display: 'grid',
                 gridTemplateColumns: 'repeat(3, 1fr)',
                 gap: '0.75rem',
-                background: 'rgba(56, 189, 248, 0.04)',
-                border: '1px solid rgba(56, 189, 248, 0.25)',
+                background: 'var(--bg-secondary)',
+                border: '1px solid var(--border-color)',
                 borderRadius: 'var(--radius-md)',
                 padding: '0.85rem 1rem'
               }}>
@@ -489,7 +489,7 @@ export default function RecordDetailModal({
                   <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
                     <UserCheck size={12} color="#38bdf8" /> Created By
                   </div>
-                  <div style={{ fontSize: '0.85rem', fontWeight: 600, color: '#fff', marginTop: '0.2rem' }}>
+                  <div style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--text-primary)', marginTop: '0.2rem' }}>
                     {customAppCreatedBy ? (
                       <span style={{ color: '#38bdf8' }}>{customAppCreatedBy}</span>
                     ) : (
@@ -502,13 +502,13 @@ export default function RecordDetailModal({
                 </div>
 
                 {/* Modified By Card */}
-                <div style={{ background: isModifiedInCustomApp ? 'rgba(192, 132, 252, 0.08)' : 'transparent', padding: isModifiedInCustomApp ? '0.3rem 0.5rem' : '0', borderRadius: 6 }}>
+                <div style={{ background: isModifiedInCustomApp ? 'var(--pill-purple-bg)' : 'transparent', padding: isModifiedInCustomApp ? '0.3rem 0.5rem' : '0', borderRadius: 6 }}>
                   <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
-                    <Edit3 size={12} color={isModifiedInCustomApp ? '#c084fc' : '#94a3b8'} /> Modified By (Custom App)
+                    <Edit3 size={12} color={isModifiedInCustomApp ? 'var(--accent-purple)' : 'var(--text-muted)'} /> Modified By (Custom App)
                   </div>
-                  <div style={{ fontSize: '0.85rem', fontWeight: 600, color: '#fff', marginTop: '0.2rem' }}>
+                  <div style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--text-primary)', marginTop: '0.2rem' }}>
                     {isModifiedInCustomApp ? (
-                      <span style={{ color: '#c084fc', fontWeight: 700 }}>{customAppModifiedBy}</span>
+                      <span style={{ color: 'var(--accent-purple)', fontWeight: 700 }}>{customAppModifiedBy}</span>
                     ) : (
                       <span style={{ color: 'var(--text-muted)', fontStyle: 'italic', fontSize: '0.78rem' }}>Not modified in custom app</span>
                     )}
@@ -797,9 +797,9 @@ export default function RecordDetailModal({
               {lower === 'account' && (
                 <>
                   {/* Related Contacts */}
-                  <div style={{ background: 'rgba(0, 0, 0, 0.2)', border: '1px solid var(--border-color)', borderRadius: 'var(--radius-md)', overflow: 'hidden' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0.75rem 1rem', background: 'rgba(255, 255, 255, 0.02)', borderBottom: '1px solid var(--border-color)' }}>
-                      <span style={{ fontSize: '0.88rem', fontWeight: 600 }}>
+                  <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border-color)', borderRadius: 'var(--radius-md)', overflow: 'hidden' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0.75rem 1rem', background: 'var(--table-header-bg)', borderBottom: '1px solid var(--border-color)' }}>
+                      <span style={{ fontSize: '0.88rem', fontWeight: 600, color: 'var(--text-primary)' }}>
                         Related Contacts ({relatedData?.contacts?.length || 0})
                       </span>
                       {!isReadOnly && onOpenCreateWithAccount && (
@@ -859,9 +859,9 @@ export default function RecordDetailModal({
                   </div>
 
                   {/* Related Opportunities */}
-                  <div style={{ background: 'rgba(0, 0, 0, 0.2)', border: '1px solid var(--border-color)', borderRadius: 'var(--radius-md)', overflow: 'hidden' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0.75rem 1rem', background: 'rgba(255, 255, 255, 0.02)', borderBottom: '1px solid var(--border-color)' }}>
-                      <span style={{ fontSize: '0.88rem', fontWeight: 600 }}>
+                  <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border-color)', borderRadius: 'var(--radius-md)', overflow: 'hidden' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0.75rem 1rem', background: 'var(--table-header-bg)', borderBottom: '1px solid var(--border-color)' }}>
+                      <span style={{ fontSize: '0.88rem', fontWeight: 600, color: 'var(--text-primary)' }}>
                         Related Opportunities ({relatedData?.opportunities?.length || 0})
                       </span>
                       {!isReadOnly && onOpenCreateWithAccount && (
@@ -924,7 +924,7 @@ export default function RecordDetailModal({
 
               {/* Contact/Opportunity Parent Account Info */}
               {(lower === 'contact' || lower === 'opportunity') && (
-                <div style={{ background: 'rgba(0, 0, 0, 0.2)', border: '1px solid var(--border-color)', borderRadius: 'var(--radius-md)', padding: '1rem' }}>
+                <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border-color)', borderRadius: 'var(--radius-md)', padding: '1rem' }}>
                   <h4 style={{ fontSize: '0.85rem', fontWeight: 600, marginBottom: '0.5rem', color: 'var(--text-secondary)' }}>
                     Parent Organization Account
                   </h4>

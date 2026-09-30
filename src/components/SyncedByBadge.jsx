@@ -204,7 +204,7 @@ export default function SyncedByBadge({ syncedBy, variant = 'table' }) {
                     borderRadius: '50%',
                     background: color.bg,
                     color: color.text,
-                    border: '2px solid #131c31',
+                    border: '2px solid var(--bg-surface)',
                     marginLeft: i > 0 ? '-8px' : 0,
                     display: 'flex',
                     alignItems: 'center',
@@ -236,10 +236,10 @@ export default function SyncedByBadge({ syncedBy, variant = 'table' }) {
           <div style={{
             marginTop: '0.6rem',
             padding: '0.65rem',
-            background: 'rgba(11, 17, 32, 0.95)',
-            border: '1px solid rgba(52, 211, 153, 0.3)',
+            background: 'var(--bg-surface)',
+            border: '1px solid var(--border-color)',
             borderRadius: '8px',
-            boxShadow: '0 10px 25px rgba(0, 0, 0, 0.5)',
+            boxShadow: 'var(--card-shadow)',
             display: 'flex',
             flexDirection: 'column',
             gap: '0.35rem',
@@ -248,13 +248,13 @@ export default function SyncedByBadge({ syncedBy, variant = 'table' }) {
           }}>
             <div style={{
               fontSize: '0.7rem',
-              color: '#38bdf8',
+              color: 'var(--accent-primary)',
               fontWeight: 700,
               textTransform: 'uppercase',
               letterSpacing: '0.05em',
               marginBottom: '0.2rem',
               paddingBottom: '0.3rem',
-              borderBottom: '1px solid rgba(255, 255, 255, 0.08)'
+              borderBottom: '1px solid var(--border-color)'
             }}>
               All Contributing Sync Members ({users.length})
             </div>
@@ -269,8 +269,8 @@ export default function SyncedByBadge({ syncedBy, variant = 'table' }) {
                     justifyContent: 'space-between',
                     padding: '0.4rem 0.6rem',
                     borderRadius: '6px',
-                    background: 'rgba(255, 255, 255, 0.02)',
-                    border: '1px solid rgba(255, 255, 255, 0.04)'
+                    background: 'var(--table-row-hover)',
+                    border: '1px solid var(--border-subtle)'
                   }}
                 >
                   <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
@@ -290,7 +290,7 @@ export default function SyncedByBadge({ syncedBy, variant = 'table' }) {
                       {u.initial}
                     </div>
                     <div>
-                      <div style={{ fontSize: '0.82rem', fontWeight: 600, color: '#f8fafc' }}>
+                      <div style={{ fontSize: '0.82rem', fontWeight: 600, color: 'var(--text-primary)' }}>
                         {u.username}
                       </div>
                       {u.email && (
@@ -377,10 +377,10 @@ export default function SyncedByBadge({ syncedBy, variant = 'table' }) {
             zIndex: 1000,
             minWidth: '220px',
             maxWidth: '280px',
-            background: '#0f172a',
-            border: '1px solid rgba(255, 255, 255, 0.15)',
+            background: 'var(--bg-surface)',
+            border: '1px solid var(--border-color)',
             borderRadius: '10px',
-            boxShadow: '0 12px 30px rgba(0, 0, 0, 0.7), 0 0 0 1px rgba(56, 189, 248, 0.15)',
+            boxShadow: 'var(--card-shadow)',
             padding: '0.5rem',
             backdropFilter: 'blur(12px)'
           }}
@@ -390,7 +390,7 @@ export default function SyncedByBadge({ syncedBy, variant = 'table' }) {
             alignItems: 'center',
             justifyContent: 'space-between',
             padding: '0.3rem 0.5rem 0.45rem',
-            borderBottom: '1px solid rgba(255, 255, 255, 0.08)',
+            borderBottom: '1px solid var(--border-color)',
             marginBottom: '0.4rem',
             fontSize: '0.7rem',
             color: 'var(--text-muted)',
@@ -398,8 +398,8 @@ export default function SyncedByBadge({ syncedBy, variant = 'table' }) {
             letterSpacing: '0.05em',
             fontWeight: 700
           }}>
-            <span style={{ color: '#38bdf8' }}>Synced by {users.length} members</span>
-            <RefreshCw size={11} color="#34d399" />
+            <span style={{ color: 'var(--accent-primary)' }}>Synced by {users.length} members</span>
+            <RefreshCw size={11} color="#00B27A" />
           </div>
 
           <div style={{
@@ -420,11 +420,10 @@ export default function SyncedByBadge({ syncedBy, variant = 'table' }) {
                     gap: '0.55rem',
                     padding: '0.35rem 0.5rem',
                     borderRadius: '6px',
-                    background: 'rgba(255, 255, 255, 0.03)',
+                    background: 'var(--table-row-hover)',
+                    border: '1px solid var(--border-subtle)',
                     transition: 'background 0.15s ease'
                   }}
-                  onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(255, 255, 255, 0.08)'}
-                  onMouseLeave={(e) => e.currentTarget.style.background = 'rgba(255, 255, 255, 0.03)'}
                 >
                   <div style={{
                     width: '24px',
@@ -446,7 +445,7 @@ export default function SyncedByBadge({ syncedBy, variant = 'table' }) {
                     <div style={{
                       fontSize: '0.78rem',
                       fontWeight: 600,
-                      color: '#f8fafc',
+                      color: 'var(--text-primary)',
                       whiteSpace: 'nowrap',
                       overflow: 'hidden',
                       textOverflow: 'ellipsis'

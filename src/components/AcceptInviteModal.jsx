@@ -81,7 +81,7 @@ export default function AcceptInviteModal({ token, onJoined, onCancel }) {
           }}>
             <Building2 size={26} />
           </div>
-          <h2 style={{ fontSize: '1.35rem', fontWeight: 700, color: '#fff' }}>
+          <h2 style={{ fontSize: '1.35rem', fontWeight: 700, color: 'var(--text-primary)' }}>
             Join Organization
           </h2>
           <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginTop: '0.35rem' }}>
@@ -129,7 +129,7 @@ export default function AcceptInviteModal({ token, onJoined, onCancel }) {
             }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.35rem' }}>
                 <span style={{ color: 'var(--text-muted)' }}>Organization:</span>
-                <strong style={{ color: '#fff' }}>{inviteInfo?.organizationName}</strong>
+                <strong style={{ color: 'var(--text-primary)' }}>{inviteInfo?.organizationName}</strong>
               </div>
               <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.35rem' }}>
                 <span style={{ color: 'var(--text-muted)' }}>Email:</span>

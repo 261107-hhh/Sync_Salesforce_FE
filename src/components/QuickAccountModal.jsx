@@ -77,7 +77,7 @@ export default function QuickAccountModal({ isOpen, onClose, onAccountCreated })
               <Building2 size={18} color="#38bdf8" />
             </div>
             <div>
-              <h3 style={{ fontSize: '1.1rem', fontWeight: 700, color: '#fff', margin: 0 }}>
+              <h3 style={{ fontSize: '1.1rem', fontWeight: 700, color: 'var(--text-primary)', margin: 0 }}>
                 Quick Create Account
               </h3>
               <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', margin: 0 }}>

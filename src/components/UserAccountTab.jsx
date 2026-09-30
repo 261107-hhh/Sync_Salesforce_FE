@@ -193,7 +193,7 @@ export default function UserAccountTab({
     <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
       
       {/* User Account Master Profile Banner */}
-      <div className="card" style={{ padding: '1.5rem', background: 'linear-gradient(135deg, rgba(15, 23, 42, 0.8), rgba(30, 41, 59, 0.85))' }}>
+      <div className="card" style={{ padding: '1.5rem', background: 'linear-gradient(135deg, var(--bg-card), var(--oodles-light))' }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '1.25rem' }}>
           
           {/* Left: Avatar + Details */}
@@ -217,7 +217,7 @@ export default function UserAccountTab({
 
             <div>
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
-                <h2 style={{ fontSize: '1.35rem', fontWeight: 800, color: '#fff', margin: 0 }}>
+                <h2 style={{ fontSize: '1.35rem', fontWeight: 800, color: 'var(--text-primary)', margin: 0 }}>
                   {user?.name || 'User Account'}
                 </h2>
                 <span style={{
@@ -281,14 +281,14 @@ export default function UserAccountTab({
           paddingTop: '1.25rem',
           borderTop: '1px solid var(--border-subtle)'
         }}>
-          <div style={{ background: 'rgba(255, 255, 255, 0.02)', padding: '0.65rem 0.85rem', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-color)' }}>
+          <div style={{ background: 'var(--table-row-hover)', padding: '0.65rem 0.85rem', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-color)' }}>
             <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)', textTransform: 'uppercase' }}>Active Workspace</span>
-            <div style={{ fontSize: '0.9rem', fontWeight: 600, color: '#fff', marginTop: '0.2rem', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+            <div style={{ fontSize: '0.9rem', fontWeight: 600, color: 'var(--text-primary)', marginTop: '0.2rem', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
               {activeOrgName || activeOrgId || 'Default Organization'}
             </div>
           </div>
 
-          <div style={{ background: 'rgba(255, 255, 255, 0.02)', padding: '0.65rem 0.85rem', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-color)' }}>
+          <div style={{ background: 'var(--table-row-hover)', padding: '0.65rem 0.85rem', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-color)' }}>
             <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)', textTransform: 'uppercase' }}>Salesforce Integration</span>
             <div style={{ fontSize: '0.9rem', fontWeight: 600, color: sfStatus?.connected ? '#34d399' : '#f87171', marginTop: '0.2rem' }}>
               {sfStatus?.connected ? (sfStatus.isMock ? 'Mock Sandbox' : 'SF Connected') : 'Disconnected'}
@@ -416,7 +416,7 @@ export default function UserAccountTab({
           <div className="card">
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.25rem', flexWrap: 'wrap', gap: '0.75rem' }}>
               <div>
-                <h3 style={{ fontSize: '1.1rem', fontWeight: 700, color: '#fff', margin: 0 }}>
+                <h3 style={{ fontSize: '1.1rem', fontWeight: 700, color: 'var(--text-primary)', margin: 0 }}>
                   Your Workspaces & Organizations
                 </h3>
                 <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', margin: 0, marginTop: '0.2rem' }}>
@@ -435,7 +435,7 @@ export default function UserAccountTab({
               )}
             </div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '1rem' }}>
+            <div style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '1rem', display: 'grid' }}>
               {organizations.map((org) => {
                 const isSelected = org.id === activeOrgId;
                 const isDefault = org.id === defaultOrgId;
@@ -445,8 +445,8 @@ export default function UserAccountTab({
                   <div
                     key={org.id}
                     style={{
-                      background: isSelected ? 'rgba(56, 189, 248, 0.08)' : 'rgba(255, 255, 255, 0.02)',
-                      border: `1px solid ${isSelected ? '#38bdf8' : 'var(--border-color)'}`,
+                      background: isSelected ? 'var(--oodles-light)' : 'var(--table-row-hover)',
+                      border: `1px solid ${isSelected ? 'var(--oodles-primary)' : 'var(--border-color)'}`,
                       borderRadius: 'var(--radius-md)',
                       padding: '1.25rem',
                       display: 'flex',
@@ -454,14 +454,14 @@ export default function UserAccountTab({
                       justifyContent: 'space-between',
                       gap: '1rem',
                       transition: 'all 0.15s ease',
-                      boxShadow: isSelected ? '0 4px 20px rgba(56, 189, 248, 0.15)' : 'none'
+                      boxShadow: isSelected ? '0 4px 20px rgba(47, 131, 197, 0.15)' : 'none'
                     }}
                   >
                     <div>
                       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.5rem', marginBottom: '0.5rem' }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                          <Building2 size={18} color={isSelected ? '#38bdf8' : 'var(--text-muted)'} />
-                          <h4 style={{ fontSize: '1rem', fontWeight: 700, color: '#fff', margin: 0 }}>
+                          <Building2 size={18} color={isSelected ? 'var(--oodles-primary)' : 'var(--text-muted)'} />
+                          <h4 style={{ fontSize: '1rem', fontWeight: 700, color: 'var(--text-primary)', margin: 0 }}>
                             {org.name}
                           </h4>
                         </div>
@@ -594,7 +594,7 @@ export default function UserAccountTab({
         <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr', gap: '1.25rem' }}>
           {/* Identity & Account Data */}
           <div className="card">
-            <h3 style={{ fontSize: '1.1rem', fontWeight: 700, color: '#fff', marginBottom: '1.25rem' }}>
+            <h3 style={{ fontSize: '1.1rem', fontWeight: 700, color: 'var(--text-primary)', marginBottom: '1.25rem' }}>
               User Identity Details
             </h3>
 
@@ -644,18 +644,18 @@ export default function UserAccountTab({
 
           {/* Role Permissions Matrix - Informs user of their own permissions */}
           <div className="card">
-            <h3 style={{ fontSize: '1.1rem', fontWeight: 700, color: '#fff', marginBottom: '1.25rem' }}>
+            <h3 style={{ fontSize: '1.1rem', fontWeight: 700, color: 'var(--text-primary)', marginBottom: '1.25rem' }}>
               Your Role Permissions ({activeOrgRole || 'MEMBER'})
             </h3>
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0.65rem 0.85rem', background: 'rgba(255, 255, 255, 0.02)', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-subtle)' }}>
-                <span style={{ fontSize: '0.85rem' }}>Explore & Search Data</span>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0.65rem 0.85rem', background: 'var(--table-row-hover)', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-subtle)' }}>
+                <span style={{ fontSize: '0.85rem', color: 'var(--text-primary)' }}>Explore & Search Data</span>
                 <span style={{ color: '#34d399', fontSize: '0.78rem', fontWeight: 600 }}>✓ Granted</span>
               </div>
 
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0.65rem 0.85rem', background: 'rgba(255, 255, 255, 0.02)', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-subtle)' }}>
-                <span style={{ fontSize: '0.85rem' }}>Create & Edit Records</span>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0.65rem 0.85rem', background: 'var(--table-row-hover)', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-subtle)' }}>
+                <span style={{ fontSize: '0.85rem', color: 'var(--text-primary)' }}>Create & Edit Records</span>
                 <span style={{ color: activeOrgRole !== 'READONLY' ? '#34d399' : '#f87171', fontSize: '0.78rem', fontWeight: 600 }}>
                   {activeOrgRole !== 'READONLY' ? '✓ Granted' : '✕ Restricted'}
                 </span>
@@ -685,11 +685,11 @@ export default function UserAccountTab({
           {/* DEDICATED MOCK SANDBOX ENVIRONMENT CARD */}
           <div className="card" style={{
             gridColumn: '1 / -1',
-            background: 'linear-gradient(135deg, rgba(30, 27, 75, 0.45), rgba(15, 23, 42, 0.75))',
+            background: 'linear-gradient(135deg, var(--pill-purple-bg), var(--bg-card))',
             border: '1px solid rgba(168, 85, 247, 0.35)',
             borderRadius: 'var(--radius-md)',
             padding: '1.5rem',
-            boxShadow: '0 6px 25px rgba(168, 85, 247, 0.1)'
+            boxShadow: '0 6px 25px rgba(168, 85, 247, 0.08)'
           }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '1rem', marginBottom: '1.25rem' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
@@ -706,7 +706,7 @@ export default function UserAccountTab({
                   <Zap size={22} color="#c084fc" />
                 </div>
                 <div>
-                  <h3 style={{ fontSize: '1.15rem', fontWeight: 700, color: '#fff', margin: 0 }}>
+                  <h3 style={{ fontSize: '1.15rem', fontWeight: 700, color: 'var(--text-primary)', margin: 0 }}>
                     Developer & Testing: Salesforce Mock Sandbox
                   </h3>
                   <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', margin: '0.2rem 0 0' }}>

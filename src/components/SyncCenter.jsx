@@ -207,7 +207,7 @@ export default function SyncCenter({ sfStatus, onNavigateToConnection, onNavigat
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
             <AlertCircle size={20} />
             <div>
-              <strong style={{ color: '#fff' }}>Salesforce is currently disconnected for this workspace. </strong>
+              <strong style={{ color: 'var(--text-primary)' }}>Salesforce is currently disconnected for this workspace. </strong>
               <span>Sync jobs cannot run until Salesforce credentials or Mock Sandbox is configured.</span>
             </div>
           </div>
@@ -215,7 +215,7 @@ export default function SyncCenter({ sfStatus, onNavigateToConnection, onNavigat
             <button
               onClick={onNavigateToConnection}
               className="btn btn-secondary btn-sm"
-              style={{ borderColor: 'rgba(248, 113, 113, 0.4)', color: '#fff' }}
+              style={{ borderColor: 'rgba(248, 113, 113, 0.4)' }}
             >
               Configure Connection
             </button>
@@ -239,7 +239,7 @@ export default function SyncCenter({ sfStatus, onNavigateToConnection, onNavigat
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
             <AlertTriangle size={22} color="#f87171" />
             <div>
-              <strong style={{ color: '#fff', fontSize: '0.9rem' }}>
+              <strong style={{ color: 'var(--text-primary)', fontSize: '0.9rem' }}>
                 Notice: Some objects encountered an error during sync
               </strong>
               <div style={{ fontSize: '0.8rem', color: '#fca5a5', marginTop: '0.2rem' }}>
@@ -279,7 +279,7 @@ export default function SyncCenter({ sfStatus, onNavigateToConnection, onNavigat
 
         {/* Controls Card */}
         <div className="card">
-          <h2 style={{ fontSize: '1.15rem', fontWeight: 700, marginBottom: '1rem', color: '#fff' }}>
+          <h2 style={{ fontSize: '1.15rem', fontWeight: 700, marginBottom: '1rem', color: 'var(--text-primary)' }}>
             Sync Orchestration
           </h2>
 
@@ -346,16 +346,16 @@ export default function SyncCenter({ sfStatus, onNavigateToConnection, onNavigat
               marginBottom: '1.25rem',
               padding: '1rem',
               borderRadius: 'var(--radius-md)',
-              background: 'linear-gradient(180deg, rgba(56, 189, 248, 0.07) 0%, rgba(15, 23, 42, 0.4) 100%)',
-              border: '1px solid rgba(56, 189, 248, 0.25)',
+              background: 'linear-gradient(180deg, var(--badge-info-bg) 0%, var(--bg-card) 100%)',
+              border: '1px solid var(--border-color)',
               display: 'flex',
               flexDirection: 'column',
               gap: '0.85rem'
             }}>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                  <Calendar size={16} color="#38bdf8" />
-                  <span style={{ fontSize: '0.85rem', fontWeight: 600, color: '#fff' }}>
+                  <Calendar size={16} color="var(--oodles-primary)" />
+                  <span style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--text-primary)' }}>
                     Incremental Query Date Range
                   </span>
                 </div>
@@ -720,7 +720,7 @@ export default function SyncCenter({ sfStatus, onNavigateToConnection, onNavigat
         {/* Sync Summary & Quick Link Card (No terminal clutter) */}
         <div className="card" style={{ display: 'flex', flexDirection: 'column' }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1rem' }}>
-            <h2 style={{ fontSize: '1.15rem', fontWeight: 700, color: '#fff' }}>Sync Status Overview</h2>
+            <h2 style={{ fontSize: '1.15rem', fontWeight: 700, color: 'var(--text-primary)' }}>Sync Status Overview</h2>
             <span className={`badge ${isRunning ? 'badge-info' : (failedObjects.length > 0 ? 'badge-danger' : 'badge-success')}`}>
               {syncStatus?.status?.toUpperCase() || 'IDLE'}
             </span>
@@ -753,20 +753,20 @@ export default function SyncCenter({ sfStatus, onNavigateToConnection, onNavigat
             gap: '0.75rem',
             marginBottom: '1.25rem'
           }}>
-            <div style={{ background: 'rgba(255, 255, 255, 0.02)', border: '1px solid var(--border-color)', borderRadius: 'var(--radius-md)', padding: '0.75rem' }}>
+            <div style={{ background: 'var(--table-header-bg)', border: '1px solid var(--border-color)', borderRadius: 'var(--radius-md)', padding: '0.75rem' }}>
               <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', textTransform: 'uppercase' }}>Records Upserted</span>
               <div style={{ fontSize: '1.25rem', fontWeight: 700, color: '#34d399', marginTop: '0.2rem' }}>
                 {syncStatus?.totalRecordsSynced || 0}
               </div>
             </div>
-            <div style={{ background: 'rgba(255, 255, 255, 0.02)', border: '1px solid var(--border-color)', borderRadius: 'var(--radius-md)', padding: '0.75rem' }}>
+            <div style={{ background: 'var(--table-header-bg)', border: '1px solid var(--border-color)', borderRadius: 'var(--radius-md)', padding: '0.75rem' }}>
               <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', textTransform: 'uppercase' }}>Current Mode</span>
               <div style={{ fontSize: '1.1rem', fontWeight: 600, color: '#c084fc', marginTop: '0.2rem' }}>
                 {syncStatus?.mode ? syncStatus.mode.toUpperCase() : 'DELTA'}
               </div>
             </div>
             {(syncStatus?.filters?.fromDate || syncStatus?.filters?.toDate) && (
-              <div style={{ background: 'rgba(255, 255, 255, 0.02)', border: '1px solid var(--border-color)', borderRadius: 'var(--radius-md)', padding: '0.75rem' }}>
+              <div style={{ background: 'var(--table-header-bg)', border: '1px solid var(--border-color)', borderRadius: 'var(--radius-md)', padding: '0.75rem' }}>
                 <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', textTransform: 'uppercase' }}>Query Window</span>
                 <div style={{ fontSize: '0.78rem', fontWeight: 600, color: '#38bdf8', marginTop: '0.35rem', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={`${syncStatus?.filters?.fromDate || 'Delta'} → ${syncStatus?.filters?.toDate || 'Today'}`}>
                   {syncStatus?.filters?.fromDate ? syncStatus.filters.fromDate : 'Delta'} → {syncStatus?.filters?.toDate ? syncStatus.filters.toDate : 'Today'}
@@ -791,7 +791,7 @@ export default function SyncCenter({ sfStatus, onNavigateToConnection, onNavigat
             }}>
               <AlertCircle size={18} style={{ color: '#facc15', flexShrink: 0, marginTop: '1px' }} />
               <div style={{ lineHeight: 1.45 }}>
-                <strong style={{ color: '#fff' }}>0 records synced from Salesforce.</strong>
+                <strong style={{ color: 'var(--text-primary)' }}>0 records synced from Salesforce.</strong>
                 {syncStatus?.filters?.nameContains ? (
                   <div style={{ marginTop: '0.2rem', color: '#fef08a' }}>
                     A name filter was active: <code>Name LIKE '%{syncStatus.filters.nameContains}%'</code>.
@@ -881,7 +881,7 @@ export default function SyncCenter({ sfStatus, onNavigateToConnection, onNavigat
       <div className="card">
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1rem' }}>
           <div>
-            <h3 style={{ fontSize: '1.05rem', fontWeight: 600, color: '#fff', margin: 0 }}>
+            <h3 style={{ fontSize: '1.05rem', fontWeight: 600, color: 'var(--text-primary)', margin: 0 }}>
               Recent Sync History
             </h3>
             <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>

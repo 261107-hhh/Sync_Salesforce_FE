@@ -197,8 +197,8 @@ export default function SyncLogsTab({ sfStatus, onNavigateToConnection, onTrigge
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '1rem' }}>
           <div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
-              <FileText size={22} color="#38bdf8" />
-              <h2 style={{ fontSize: '1.25rem', fontWeight: 700, color: '#fff', margin: 0 }}>
+              <FileText size={22} color="var(--oodles-primary)" />
+              <h2 style={{ fontSize: '1.25rem', fontWeight: 700, color: 'var(--text-primary)', margin: 0 }}>
                 Sync Logs & Audit Center
               </h2>
             </div>
@@ -263,7 +263,7 @@ export default function SyncLogsTab({ sfStatus, onNavigateToConnection, onTrigge
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
             <AlertTriangle size={22} color="#f87171" />
             <div>
-              <strong style={{ color: '#fff', fontSize: '0.9rem' }}>
+              <strong style={{ color: 'var(--text-primary)', fontSize: '0.9rem' }}>
                 Partial Sync Failure Detected:
               </strong>
               <div style={{ fontSize: '0.8rem', color: '#fca5a5', marginTop: '0.2rem' }}>
@@ -294,7 +294,7 @@ export default function SyncLogsTab({ sfStatus, onNavigateToConnection, onTrigge
         {/* Current Job Status Summary */}
         <div className="card">
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1rem' }}>
-            <h3 style={{ fontSize: '1.05rem', fontWeight: 600, color: '#fff' }}>
+            <h3 style={{ fontSize: '1.05rem', fontWeight: 600, color: 'var(--text-primary)' }}>
               Current / Last Job Details
             </h3>
             <span className={`badge ${isRunning ? 'badge-info' : (failedObjects.length > 0 ? 'badge-danger' : 'badge-success')}`}>
@@ -401,8 +401,8 @@ export default function SyncLogsTab({ sfStatus, onNavigateToConnection, onTrigge
         {/* Live Execution Logs Terminal */}
         <div className="card" style={{ display: 'flex', flexDirection: 'column', minHeight: 380 }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.75rem', flexWrap: 'wrap', gap: '0.5rem' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: '#fff', fontSize: '0.95rem', fontWeight: 600 }}>
-              <Terminal size={16} color="#38bdf8" />
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--text-primary)', fontSize: '0.95rem', fontWeight: 600 }}>
+              <Terminal size={16} color="var(--oodles-primary)" />
               <span>Live Terminal Logs</span>
             </div>
 
@@ -495,7 +495,7 @@ export default function SyncLogsTab({ sfStatus, onNavigateToConnection, onTrigge
       <div className="card">
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1rem', flexWrap: 'wrap', gap: '0.75rem' }}>
           <div>
-            <h3 style={{ fontSize: '1.05rem', fontWeight: 600, color: '#fff', margin: 0 }}>
+            <h3 style={{ fontSize: '1.05rem', fontWeight: 600, color: 'var(--text-primary)', margin: 0 }}>
               Sync Audit History
             </h3>
             <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>

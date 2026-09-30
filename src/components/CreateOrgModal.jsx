@@ -67,7 +67,7 @@ export default function CreateOrgModal({ isOpen, onClose }) {
               <Building2 size={20} />
             </div>
             <div>
-              <h3 style={{ fontSize: '1.15rem', fontWeight: 700, color: '#fff' }}>
+              <h3 style={{ fontSize: '1.15rem', fontWeight: 700, color: 'var(--text-primary)' }}>
                 Create New Organization
               </h3>
               <p style={{ fontSize: '0.78rem', color: 'var(--text-secondary)' }}>

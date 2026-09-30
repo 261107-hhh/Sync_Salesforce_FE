@@ -153,11 +153,11 @@ export default function ConnectionTab({ sfStatus, onStatusChange, onNavigateProf
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.25rem', flexWrap: 'wrap', gap: '1rem' }}>
           <div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.25rem' }}>
-              <Building2 size={18} color="#38bdf8" />
+              <Building2 size={18} color="var(--oodles-primary)" />
               <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>Organization Workspace:</span>
-              <strong style={{ color: '#fff' }}>{activeOrgName || activeOrgId}</strong>
+              <strong style={{ color: 'var(--text-primary)' }}>{activeOrgName || activeOrgId}</strong>
             </div>
-            <h2 style={{ fontSize: '1.25rem', fontWeight: 700, color: '#fff' }}>
+            <h2 style={{ fontSize: '1.25rem', fontWeight: 700, color: 'var(--text-primary)' }}>
               Salesforce Integration Setup
             </h2>
             <p style={{ fontSize: '0.82rem', color: 'var(--text-secondary)' }}>
@@ -189,7 +189,7 @@ export default function ConnectionTab({ sfStatus, onStatusChange, onNavigateProf
             }} />
             <div>
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                <strong style={{ color: '#fff', fontSize: '0.95rem' }}>
+                <strong style={{ color: 'var(--text-primary)', fontSize: '0.95rem' }}>
                   {sfStatus?.connected
                     ? (sfStatus.isMock ? 'Connected to Mock Sandbox' : 'Salesforce Integration Active')
                     : 'Salesforce Disconnected'}
@@ -250,9 +250,9 @@ export default function ConnectionTab({ sfStatus, onStatusChange, onNavigateProf
             fontSize: '0.85rem',
             color: 'var(--text-secondary)'
           }}>
-            <Lock size={18} color="#38bdf8" />
+            <Lock size={18} color="var(--oodles-primary)" />
             <div>
-              <strong style={{ color: '#fff' }}>Shared Organization Connection: </strong>
+              <strong style={{ color: 'var(--text-primary)' }}>Shared Organization Connection: </strong>
               Salesforce integration is managed by Organization Administrators. You automatically use this shared connection to sync records.
             </div>
           </div>
@@ -292,7 +292,7 @@ export default function ConnectionTab({ sfStatus, onStatusChange, onNavigateProf
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
             <Zap size={18} color="#c084fc" />
             <div style={{ fontSize: '0.82rem', color: 'var(--text-secondary)' }}>
-              <strong style={{ color: '#fff' }}>Simulated Mock Testing: </strong>
+              <strong style={{ color: 'var(--text-primary)' }}>Simulated Mock Testing: </strong>
               The Mock Sandbox option is located under the <strong>Profile & Security</strong> tab for safe testing without live Salesforce credentials.
             </div>
           </div>

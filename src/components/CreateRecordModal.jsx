@@ -152,7 +152,7 @@ export default function CreateRecordModal({
                 <Plus size={20} color="#38bdf8" />
               </div>
               <div>
-                <h3 style={{ fontSize: '1.15rem', fontWeight: 700, color: '#fff', margin: 0 }}>
+                <h3 style={{ fontSize: '1.15rem', fontWeight: 700, color: 'var(--text-primary)', margin: 0 }}>
                   Create New {objectName}
                 </h3>
                 <p style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', margin: '0.15rem 0 0' }}>

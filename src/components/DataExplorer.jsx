@@ -639,7 +639,7 @@ export default function DataExplorer({ onOpenDetails, onOpenCreate, onOpenEdit, 
                       {/* ACCOUNT SPECIFIC ROW */}
                       {activeTable === 'Account' && (
                         <>
-                          <td style={{ fontWeight: 600, color: '#fff' }}>{row.Name || row.name || '-'}</td>
+                          <td style={{ fontWeight: 600, color: 'var(--text-primary)' }}>{row.Name || row.name || '-'}</td>
                           <td>{row.Type || row.type || '-'}</td>
                           <td>{row.Industry || row.industry || '-'}</td>
                           <td>{row.Phone || row.phone || '-'}</td>
@@ -653,7 +653,7 @@ export default function DataExplorer({ onOpenDetails, onOpenCreate, onOpenEdit, 
                       {/* CONTACT SPECIFIC ROW */}
                       {activeTable === 'Contact' && (
                         <>
-                          <td style={{ fontWeight: 600, color: '#fff' }}>
+                          <td style={{ fontWeight: 600, color: 'var(--text-primary)' }}>
                             {row.Name || `${row.FirstName || row.firstName || ''} ${row.LastName || row.lastName || ''}`.trim() || '-'}
                           </td>
                           <td>{row.Title || row.title || '-'}</td>
@@ -679,7 +679,7 @@ export default function DataExplorer({ onOpenDetails, onOpenCreate, onOpenEdit, 
                       {/* OPPORTUNITY SPECIFIC ROW */}
                       {activeTable === 'Opportunity' && (
                         <>
-                          <td style={{ fontWeight: 600, color: '#fff' }}>{row.Name || row.name || '-'}</td>
+                          <td style={{ fontWeight: 600, color: 'var(--text-primary)' }}>{row.Name || row.name || '-'}</td>
                           <td>
                             <span className="badge badge-info">{row.StageName || row.stageName || '-'}</span>
                           </td>
@@ -707,7 +707,7 @@ export default function DataExplorer({ onOpenDetails, onOpenCreate, onOpenEdit, 
                       {/* LEAD SPECIFIC ROW */}
                       {activeTable === 'Lead' && (
                         <>
-                          <td style={{ fontWeight: 600, color: '#fff' }}>
+                          <td style={{ fontWeight: 600, color: 'var(--text-primary)' }}>
                             {row.Name || `${row.FirstName || row.firstName || ''} ${row.LastName || row.lastName || ''}`.trim() || '-'}
                           </td>
                           <td style={{ fontWeight: 500 }}>{row.Company || row.company || '-'}</td>

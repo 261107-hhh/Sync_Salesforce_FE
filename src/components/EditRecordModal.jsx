@@ -153,7 +153,7 @@ export default function EditRecordModal({ isOpen, onClose, objectName, record, o
                 <Edit3 size={18} color="#38bdf8" />
               </div>
               <div>
-                <h3 style={{ fontSize: '1.15rem', fontWeight: 700, color: '#fff', margin: 0 }}>
+                <h3 style={{ fontSize: '1.15rem', fontWeight: 700, color: 'var(--text-primary)', margin: 0 }}>
                   Edit {objectName}: {formData.Name || `${formData.FirstName || ''} ${formData.LastName || ''}`.trim() || recordId}
                 </h3>
                 <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.75rem', color: '#38bdf8' }}>

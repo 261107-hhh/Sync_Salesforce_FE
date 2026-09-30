@@ -185,11 +185,11 @@ export default function TeamManagement() {
                 <Users size={20} />
               </div>
               <div>
-                <h2 style={{ fontSize: '1.25rem', fontWeight: 700, color: '#fff' }}>
+                <h2 style={{ fontSize: '1.25rem', fontWeight: 700, color: 'var(--text-primary)' }}>
                   Team & Organization Members
                 </h2>
                 <p style={{ fontSize: '0.82rem', color: 'var(--text-secondary)' }}>
-                  Workspace: <strong style={{ color: '#fff' }}>{activeOrgName || activeOrgId}</strong>
+                  Workspace: <strong style={{ color: 'var(--text-primary)' }}>{activeOrgName || activeOrgId}</strong>
                   {activeOrgRole && (
                     <> • Your Role: <span className={`badge ${getRoleBadgeClass(activeOrgRole)}`}>{activeOrgRole}</span></>
                   )}
@@ -241,7 +241,7 @@ export default function TeamManagement() {
       <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
         <div style={{ padding: '1rem 1.5rem', borderBottom: '1px solid var(--border-color)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <div>
-            <h3 style={{ fontSize: '1.05rem', fontWeight: 600, color: '#fff' }}>
+            <h3 style={{ fontSize: '1.05rem', fontWeight: 600, color: 'var(--text-primary)' }}>
               Active Members ({members.length})
             </h3>
             <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
@@ -291,7 +291,7 @@ export default function TeamManagement() {
                             {(m.name || m.email || 'U').charAt(0).toUpperCase()}
                           </div>
                           <div>
-                            <div style={{ fontWeight: 600, color: '#fff' }}>
+                            <div style={{ fontWeight: 600, color: 'var(--text-primary)' }}>
                               {m.name || 'Team Member'} {isSelf && <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>(You)</span>}
                             </div>
                             <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>User ID: #{m.userId}</div>
@@ -368,7 +368,7 @@ export default function TeamManagement() {
         <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
           <div style={{ padding: '1rem 1.5rem', borderBottom: '1px solid var(--border-color)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
             <div>
-              <h3 style={{ fontSize: '1.05rem', fontWeight: 600, color: '#fff' }}>
+              <h3 style={{ fontSize: '1.05rem', fontWeight: 600, color: 'var(--text-primary)' }}>
                 Track Sent Invitations ({invitations.length})
               </h3>
               <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
@@ -407,7 +407,7 @@ export default function TeamManagement() {
                         <td>
                           <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                             <Mail size={15} color="var(--text-muted)" />
-                            <strong style={{ color: '#fff', fontSize: '0.85rem' }}>{inv.email}</strong>
+                            <strong style={{ color: 'var(--text-primary)', fontSize: '0.85rem' }}>{inv.email}</strong>
                           </div>
                         </td>
                         <td>
@@ -482,7 +482,7 @@ export default function TeamManagement() {
                   <UserPlus size={18} />
                 </div>
                 <div>
-                  <h3 style={{ fontSize: '1.15rem', fontWeight: 700, color: '#fff' }}>
+                  <h3 style={{ fontSize: '1.15rem', fontWeight: 700, color: 'var(--text-primary)' }}>
                     Invite Colleague
                   </h3>
                   <p style={{ fontSize: '0.78rem', color: 'var(--text-secondary)' }}>

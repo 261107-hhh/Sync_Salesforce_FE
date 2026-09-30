@@ -47,7 +47,7 @@ export default class ErrorBoundary extends React.Component {
             }}>
               <AlertTriangle size={26} />
             </div>
-            <h2 style={{ fontSize: '1.3rem', fontWeight: 700, marginBottom: '0.5rem', color: '#fff' }}>
+            <h2 style={{ fontSize: '1.3rem', fontWeight: 700, marginBottom: '0.5rem', color: 'var(--text-primary)' }}>
               Something went wrong
             </h2>
             <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: '1.5rem' }}>
