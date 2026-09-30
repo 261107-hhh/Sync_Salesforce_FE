@@ -137,7 +137,7 @@ export default function EditRecordModal({ isOpen, onClose, objectName, record, o
   return (
     <>
       <div className="modal-overlay" onClick={onClose}>
-        <div className="modal-content" onClick={(e) => e.stopPropagation()} style={{ maxWidth: 840 }}>
+        <div className="modal-content modal-content-lg" onClick={(e) => e.stopPropagation()}>
           {/* Header */}
           <div className="modal-header">
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
@@ -192,7 +192,7 @@ export default function EditRecordModal({ isOpen, onClose, objectName, record, o
                     <h4 style={{ fontSize: '0.82rem', fontWeight: 700, color: 'var(--text-secondary)', textTransform: 'uppercase', marginBottom: '0.75rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
                       <Briefcase size={14} color="#38bdf8" /> General Information
                     </h4>
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '0.75rem' }}>
+                    <div className="form-grid-3">
                       <div className="form-group">
                         <label className="form-label">Salutation</label>
                         <select className="form-select" value={formData.Salutation || ''} onChange={(e) => handleFieldChange('Salutation', e.target.value)}>
@@ -216,7 +216,7 @@ export default function EditRecordModal({ isOpen, onClose, objectName, record, o
                       </div>
                     </div>
 
-                    <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr 1fr', gap: '0.75rem', marginTop: '0.5rem' }}>
+                    <div className="form-grid-3" style={{ marginTop: '0.5rem' }}>
                       {/* Related Account with + New Account */}
                       <div className="form-group">
                         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.35rem' }}>
@@ -255,7 +255,7 @@ export default function EditRecordModal({ isOpen, onClose, objectName, record, o
                     <h4 style={{ fontSize: '0.82rem', fontWeight: 700, color: 'var(--text-secondary)', textTransform: 'uppercase', marginBottom: '0.75rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
                       <Phone size={14} color="#34d399" /> Phone & Communication
                     </h4>
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '0.75rem' }}>
+                    <div className="form-grid-3">
                       <div className="form-group">
                         <label className="form-label">Email</label>
                         <input type="email" className="form-input" value={formData.Email || ''} onChange={(e) => handleFieldChange('Email', e.target.value)} />
@@ -272,7 +272,7 @@ export default function EditRecordModal({ isOpen, onClose, objectName, record, o
                       </div>
                     </div>
 
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '0.75rem', marginTop: '0.5rem' }}>
+                    <div className="form-grid-3" style={{ marginTop: '0.5rem' }}>
                       <div className="form-group">
                         <label className="form-label">Home Phone</label>
                         <input type="text" className="form-input" value={formData.HomePhone || ''} onChange={(e) => handleFieldChange('HomePhone', e.target.value)} />
@@ -395,7 +395,7 @@ export default function EditRecordModal({ isOpen, onClose, objectName, record, o
                     <h4 style={{ fontSize: '0.82rem', fontWeight: 700, color: 'var(--text-secondary)', textTransform: 'uppercase', marginBottom: '0.75rem' }}>
                       Account Overview
                     </h4>
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '0.75rem' }}>
+                    <div className="form-grid-3">
                       <div className="form-group">
                         <label className="form-label">Account Name <span style={{ color: '#f87171' }}>*</span></label>
                         <input type="text" required className="form-input" value={formData.Name || ''} onChange={(e) => handleFieldChange('Name', e.target.value)} />
@@ -586,7 +586,7 @@ export default function EditRecordModal({ isOpen, onClose, objectName, record, o
                       </div>
                     </div>
 
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '0.75rem', marginTop: '0.5rem' }}>
+                    <div className="form-grid-3" style={{ marginTop: '0.5rem' }}>
                       <div className="form-group">
                         <label className="form-label">Deal Type</label>
                         <select className="form-select" value={formData.Type || ''} onChange={(e) => handleFieldChange('Type', e.target.value)}>
@@ -629,7 +629,7 @@ export default function EditRecordModal({ isOpen, onClose, objectName, record, o
                     <h4 style={{ fontSize: '0.82rem', fontWeight: 700, color: 'var(--text-secondary)', textTransform: 'uppercase', marginBottom: '0.75rem' }}>
                       Lead Information
                     </h4>
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '0.75rem' }}>
+                    <div className="form-grid-3">
                       <div className="form-group">
                         <label className="form-label">First Name</label>
                         <input type="text" className="form-input" value={formData.FirstName || ''} onChange={(e) => handleFieldChange('FirstName', e.target.value)} />
@@ -690,7 +690,7 @@ export default function EditRecordModal({ isOpen, onClose, objectName, record, o
                     <h4 style={{ fontSize: '0.82rem', fontWeight: 700, color: 'var(--text-secondary)', textTransform: 'uppercase', marginBottom: '0.75rem' }}>
                       Contact Information
                     </h4>
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '0.75rem' }}>
+                    <div className="form-grid-3">
                       <div className="form-group">
                         <label className="form-label">Email</label>
                         <input type="email" className="form-input" value={formData.Email || ''} onChange={(e) => handleFieldChange('Email', e.target.value)} />

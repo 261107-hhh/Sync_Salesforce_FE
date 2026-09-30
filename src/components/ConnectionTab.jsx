@@ -309,7 +309,7 @@ export default function ConnectionTab({ sfStatus, onStatusChange, onNavigateProf
         </div>
 
         {/* Live Salesforce Mode Selector */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '0.75rem', marginBottom: '1.5rem' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '0.75rem', marginBottom: '1.5rem' }}>
           {[
             { id: 'eca', label: 'External Client App (ECA)', desc: 'OAuth 2.0 Client Credentials (Production Recommended)' },
             { id: 'password', label: 'Username & Password', desc: 'Direct credentials flow with Security Token' }
@@ -324,10 +324,11 @@ export default function ConnectionTab({ sfStatus, onStatusChange, onNavigateProf
                 border: `1px solid ${mode === m.id ? 'rgba(56, 189, 248, 0.4)' : 'var(--border-color)'}`,
                 cursor: isManager ? 'pointer' : 'default',
                 opacity: isManager ? 1 : 0.75,
-                transition: 'all 0.15s ease'
+                transition: 'all 0.15s ease',
+                minWidth: 0
               }}
             >
-              <div style={{ fontSize: '0.88rem', fontWeight: 600, color: mode === m.id ? '#38bdf8' : '#fff' }}>
+              <div style={{ fontSize: '0.88rem', fontWeight: 600, color: mode === m.id ? '#38bdf8' : 'var(--text-primary)' }}>
                 {m.label}
               </div>
               <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', marginTop: '0.2rem' }}>

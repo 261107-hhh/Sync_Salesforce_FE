@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { useAuth } from '../context/AuthContext';
 import api from '../api/client';
 import {
@@ -8,17 +8,24 @@ import {
   Edit3,
   ChevronLeft,
   ChevronRight,
+  ChevronDown,
+  ChevronUp,
   UserCheck,
   RefreshCw,
   Download,
   FileSpreadsheet,
   FileCode,
   Building2,
+  Database,
   Lock,
   Filter,
   X,
   ShieldCheck,
-  CheckCircle2
+  CheckCircle2,
+  Check,
+  Users,
+  TrendingUp,
+  Target
 } from 'lucide-react';
 import SyncedByBadge, { parseSyncedBy } from './SyncedByBadge';
 
@@ -37,7 +44,37 @@ export default function DataExplorer({ onOpenDetails, onOpenCreate, onOpenEdit, 
   const [loading, setLoading] = useState(false);
   const [exporting, setExporting] = useState(false);
 
+  // Table options configuration
+  const tableOptions = [
+    { id: 'Account', label: 'Account', icon: Building2 },
+    { id: 'Contact', label: 'Contact', icon: Users },
+    { id: 'Opportunity', label: 'Opportunity', icon: TrendingUp },
+    { id: 'Lead', label: 'Lead', icon: Target }
+  ];
+
+  const [tableDropdownOpen, setTableDropdownOpen] = useState(false);
+  const tableDropdownRef = useRef(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (tableDropdownRef.current && !tableDropdownRef.current.contains(event.target)) {
+        setTableDropdownOpen(false);
+      }
+    };
+    if (tableDropdownOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [tableDropdownOpen]);
+
+  const currentTableOpt = tableOptions.find((t) => t.id === activeTable) || tableOptions[0];
+  const CurrentTableIcon = currentTableOpt.icon;
+  const currentCount = tableCounts.find((t) => t.objectName === activeTable)?.count;
+
   // Tab-specific filters
+  const [showFilters, setShowFilters] = useState(false);
   const [filterOrigin, setFilterOrigin] = useState('all'); // 'all' | 'custom' | 'salesforce'
   const [filterIndustry, setFilterIndustry] = useState('');
   const [filterType, setFilterType] = useState('');
@@ -198,6 +235,18 @@ export default function DataExplorer({ onOpenDetails, onOpenCreate, onOpenEdit, 
     filterDepartment
   );
 
+  const activeFilterCount = useMemo(() => {
+    let count = 0;
+    if (filterOrigin !== 'all') count++;
+    if (filterIndustry) count++;
+    if (filterType) count++;
+    if (filterStage) count++;
+    if (filterStatus) count++;
+    if (filterDepartment) count++;
+    if (filterSyncedBy) count++;
+    return count;
+  }, [filterOrigin, filterIndustry, filterType, filterStage, filterStatus, filterDepartment, filterSyncedBy]);
+
   const resetFilters = () => {
     setFilterOrigin('all');
     setFilterSyncedBy('');
@@ -214,36 +263,32 @@ export default function DataExplorer({ onOpenDetails, onOpenCreate, onOpenEdit, 
     <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
       
       {/* Header Bar */}
-      <div className="card" style={{ padding: '1rem 1.5rem' }}>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '1rem' }}>
+      <div
+        className="card data-explorer-header-card"
+        style={{
+          position: 'relative',
+          zIndex: tableDropdownOpen ? 100 : 10,
+          transform: 'none'
+        }}
+      >
+        <div className="data-explorer-header">
           
-          {/* Table Switcher Pills */}
-          <div style={{ display: 'flex', gap: '0.5rem', background: 'var(--bg-input)', padding: '0.3rem', borderRadius: 'var(--radius-md)' }}>
-            {['Account', 'Contact', 'Opportunity', 'Lead'].map((tab) => {
-              const count = tableCounts.find((t) => t.objectName === tab)?.count;
+          {/* Table Switcher: Desktop Tabs (Visible on > 900px) */}
+          <div className="data-explorer-desktop-tabs data-explorer-tabs-container">
+            {tableOptions.map((opt) => {
+              const count = tableCounts.find((t) => t.objectName === opt.id)?.count;
+              const TabIcon = opt.icon;
               return (
                 <button
-                  key={tab}
+                  key={opt.id}
                   type="button"
-                  onClick={() => handleSwitchTable(tab)}
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '0.4rem',
-                    padding: '0.45rem 0.85rem',
-                    borderRadius: 'var(--radius-sm)',
-                    border: 'none',
-                    background: activeTable === tab ? 'rgba(56, 189, 248, 0.15)' : 'transparent',
-                    color: activeTable === tab ? '#38bdf8' : 'var(--text-secondary)',
-                    fontWeight: activeTable === tab ? 600 : 500,
-                    fontSize: '0.85rem',
-                    cursor: 'pointer',
-                    transition: 'all 0.15s ease'
-                  }}
+                  onClick={() => handleSwitchTable(opt.id)}
+                  className={`data-explorer-tab-btn ${activeTable === opt.id ? 'active' : ''}`}
                 >
-                  <span>{tab}</span>
+                  <TabIcon size={14} />
+                  <span>{opt.label}</span>
                   {count !== undefined && (
-                    <span style={{ fontSize: '0.72rem', opacity: 0.75, background: 'rgba(255, 255, 255, 0.08)', padding: '1px 6px', borderRadius: 10 }}>
+                    <span className="data-explorer-tab-badge">
                       {count}
                     </span>
                   )}
@@ -252,26 +297,101 @@ export default function DataExplorer({ onOpenDetails, onOpenCreate, onOpenEdit, 
             })}
           </div>
 
+          {/* Table Switcher: Mobile Dropdown (Visible on <= 900px, replaces horizontal scroll & matches exact width) */}
+          <div className="data-explorer-mobile-dropdown" ref={tableDropdownRef}>
+            <div className="data-explorer-custom-dropdown">
+              <button
+                type="button"
+                className="data-explorer-dropdown-trigger"
+                onClick={() => setTableDropdownOpen(!tableDropdownOpen)}
+                aria-expanded={tableDropdownOpen}
+                aria-label="Select Salesforce Object"
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', minWidth: 0 }}>
+                  <CurrentTableIcon size={15} color="var(--oodles-primary)" style={{ flexShrink: 0 }} />
+                  <span style={{
+                    fontWeight: 700,
+                    fontSize: '0.88rem',
+                    color: 'var(--text-primary)',
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                    whiteSpace: 'nowrap'
+                  }}>
+                    {currentTableOpt.label}
+                  </span>
+                  {currentCount !== undefined && (
+                    <span className="data-explorer-tab-badge" style={{ fontSize: '0.72rem', padding: '1px 6px' }}>
+                      {currentCount}
+                    </span>
+                  )}
+                </div>
+                <ChevronDown
+                  size={16}
+                  style={{
+                    color: 'var(--text-muted)',
+                    transform: tableDropdownOpen ? 'rotate(180deg)' : 'rotate(0deg)',
+                    transition: 'transform 0.2s ease',
+                    flexShrink: 0
+                  }}
+                />
+              </button>
+
+              {tableDropdownOpen && (
+                <div className="data-explorer-dropdown-menu">
+                  {tableOptions.map((opt) => {
+                    const OptIcon = opt.icon;
+                    const isSelected = activeTable === opt.id;
+                    const count = tableCounts.find((t) => t.objectName === opt.id)?.count;
+                    return (
+                      <button
+                        key={opt.id}
+                        type="button"
+                        className={`data-explorer-dropdown-item ${isSelected ? 'selected' : ''}`}
+                        onClick={() => {
+                          handleSwitchTable(opt.id);
+                          setTableDropdownOpen(false);
+                        }}
+                      >
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
+                          <OptIcon size={15} color={isSelected ? 'var(--oodles-primary)' : 'var(--text-muted)'} />
+                          <span style={{ fontWeight: isSelected ? 700 : 500 }}>
+                            {opt.label}
+                          </span>
+                          {count !== undefined && (
+                            <span className="data-explorer-tab-badge" style={{ fontSize: '0.7rem', padding: '1px 6px' }}>
+                              {count}
+                            </span>
+                          )}
+                        </div>
+                        {isSelected && <Check size={14} color="var(--oodles-primary)" />}
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          </div>
+
           {/* Action Row */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', flexWrap: 'wrap' }}>
+          <div className="data-explorer-actions">
             {/* Search Input */}
-            <div style={{ position: 'relative' }}>
+            <div className="data-explorer-search-wrapper">
               <input
                 type="text"
                 placeholder={`Search ${activeTable}...`}
                 className="form-input"
-                style={{ paddingLeft: '2.2rem', paddingRight: searchInput ? '2rem' : '0.85rem', width: 220, padding: '0.45rem 0.85rem 0.45rem 2.2rem', fontSize: '0.82rem' }}
+                style={{ paddingLeft: '2.1rem', paddingRight: searchInput ? '2rem' : '0.75rem', width: '100%', padding: '0.42rem 0.75rem 0.42rem 2.1rem', fontSize: '0.82rem' }}
                 value={searchInput}
                 onChange={(e) => setSearchInput(e.target.value)}
               />
-              <Search size={14} color="var(--text-muted)" style={{ position: 'absolute', left: '0.75rem', top: '50%', transform: 'translateY(-50%)' }} />
+              <Search size={14} color="var(--text-muted)" style={{ position: 'absolute', left: '0.7rem', top: '50%', transform: 'translateY(-50%)' }} />
               {searchInput && (
                 <button
                   type="button"
                   onClick={() => setSearchInput('')}
                   style={{
                     position: 'absolute',
-                    right: '0.6rem',
+                    right: '0.55rem',
                     top: '50%',
                     transform: 'translateY(-50%)',
                     background: 'transparent',
@@ -288,6 +408,37 @@ export default function DataExplorer({ onOpenDetails, onOpenCreate, onOpenEdit, 
                 </button>
               )}
             </div>
+
+            {/* Filters Toggle Button */}
+            <button
+              type="button"
+              onClick={() => setShowFilters(!showFilters)}
+              className={`btn ${showFilters || hasActiveFilters ? 'btn-primary' : 'btn-secondary'} btn-sm`}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.45rem',
+                position: 'relative'
+              }}
+              title={showFilters ? "Hide filter controls" : "Show filter controls"}
+            >
+              <Filter size={14} />
+              <span>Filters</span>
+              {activeFilterCount > 0 && (
+                <span style={{
+                  background: showFilters ? 'rgba(255, 255, 255, 0.28)' : 'var(--oodles-primary)',
+                  color: '#ffffff',
+                  fontSize: '0.7rem',
+                  fontWeight: 700,
+                  padding: '1px 6px',
+                  borderRadius: '9999px',
+                  lineHeight: 1.2
+                }}>
+                  {activeFilterCount}
+                </span>
+              )}
+              {showFilters ? <ChevronUp size={13} /> : <ChevronDown size={13} />}
+            </button>
 
             {/* Refresh */}
             <button
@@ -329,196 +480,328 @@ export default function DataExplorer({ onOpenDetails, onOpenCreate, onOpenEdit, 
                 title={isLive ? 'Create record in Salesforce & Local Database' : 'Connect Salesforce to create records'}
               >
                 <Plus size={15} />
-                New {activeTable}
+                <span>New {activeTable}</span>
               </button>
             )}
           </div>
         </div>
 
-        {/* Dynamic Object Filter Bar */}
-        <div style={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: '0.75rem',
-          flexWrap: 'wrap',
-          marginTop: '1rem',
-          paddingTop: '0.85rem',
-          borderTop: '1px solid var(--border-subtle)',
-          fontSize: '0.82rem'
-        }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', color: 'var(--text-muted)', fontWeight: 600 }}>
-            <Filter size={14} /> Filters:
+        {/* Dynamic Object Filter Panel (Collapsible) */}
+        {showFilters && (
+          <div style={{
+            marginTop: '1rem',
+            paddingTop: '0.9rem',
+            borderTop: '1px solid var(--border-subtle)',
+            animation: 'fadeIn 0.2s ease-out'
+          }}>
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              marginBottom: '0.75rem',
+              flexWrap: 'wrap',
+              gap: '0.5rem'
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', color: 'var(--text-primary)', fontWeight: 600, fontSize: '0.85rem' }}>
+                <Filter size={14} color="var(--oodles-primary)" />
+                <span>Filter {activeTable} Records</span>
+                {activeFilterCount > 0 && (
+                  <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', fontWeight: 400 }}>
+                    ({activeFilterCount} active)
+                  </span>
+                )}
+              </div>
+
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
+                <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>
+                  Showing {filteredRecords.length} matching rows
+                </span>
+                {hasActiveFilters && (
+                  <button
+                    type="button"
+                    onClick={resetFilters}
+                    className="btn btn-secondary btn-sm"
+                    style={{ fontSize: '0.75rem', padding: '0.2rem 0.55rem', color: '#f87171' }}
+                  >
+                    <X size={12} /> Clear Filters
+                  </button>
+                )}
+              </div>
+            </div>
+
+            {/* Filter Controls Grid */}
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.65rem',
+              flexWrap: 'wrap',
+              fontSize: '0.82rem'
+            }}>
+              {/* Origin Filter (Applies to all objects) */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+                <label style={{ fontSize: '0.7rem', color: 'var(--text-muted)', fontWeight: 600 }}>Origin</label>
+                <select
+                  className="form-select"
+                  style={{ width: 'auto', minWidth: 140, padding: '0.35rem 0.65rem', fontSize: '0.8rem' }}
+                  value={filterOrigin}
+                  onChange={(e) => setFilterOrigin(e.target.value)}
+                >
+                  <option value="all">All Origins</option>
+                  <option value="custom">Created in Custom App</option>
+                  <option value="salesforce">Salesforce Synced</option>
+                </select>
+              </div>
+
+              {/* Account Filters */}
+              {activeTable === 'Account' && (
+                <>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+                    <label style={{ fontSize: '0.7rem', color: 'var(--text-muted)', fontWeight: 600 }}>Industry</label>
+                    <select
+                      className="form-select"
+                      style={{ width: 'auto', minWidth: 140, padding: '0.35rem 0.65rem', fontSize: '0.8rem' }}
+                      value={filterIndustry}
+                      onChange={(e) => setFilterIndustry(e.target.value)}
+                    >
+                      <option value="">All Industries</option>
+                      <option value="Technology">Technology</option>
+                      <option value="Finance">Finance</option>
+                      <option value="Healthcare">Healthcare</option>
+                      <option value="Manufacturing">Manufacturing</option>
+                      <option value="Consulting">Consulting</option>
+                      <option value="Education">Education</option>
+                      <option value="Energy">Energy</option>
+                      <option value="Retail">Retail</option>
+                    </select>
+                  </div>
+
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+                    <label style={{ fontSize: '0.7rem', color: 'var(--text-muted)', fontWeight: 600 }}>Type</label>
+                    <select
+                      className="form-select"
+                      style={{ width: 'auto', minWidth: 140, padding: '0.35rem 0.65rem', fontSize: '0.8rem' }}
+                      value={filterType}
+                      onChange={(e) => setFilterType(e.target.value)}
+                    >
+                      <option value="">All Types</option>
+                      <option value="Prospect">Prospect</option>
+                      <option value="Customer - Direct">Customer - Direct</option>
+                      <option value="Customer - Channel">Customer - Channel</option>
+                      <option value="Channel Partner / Reseller">Channel Partner / Reseller</option>
+                    </select>
+                  </div>
+                </>
+              )}
+
+              {/* Contact Filters */}
+              {activeTable === 'Contact' && (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+                  <label style={{ fontSize: '0.7rem', color: 'var(--text-muted)', fontWeight: 600 }}>Department</label>
+                  <select
+                    className="form-select"
+                    style={{ width: 'auto', minWidth: 140, padding: '0.35rem 0.65rem', fontSize: '0.8rem' }}
+                    value={filterDepartment}
+                    onChange={(e) => setFilterDepartment(e.target.value)}
+                  >
+                    <option value="">All Departments</option>
+                    <option value="Engineering">Engineering</option>
+                    <option value="Sales">Sales</option>
+                    <option value="Marketing">Marketing</option>
+                    <option value="Operations">Operations</option>
+                    <option value="Finance">Finance</option>
+                    <option value="Executive">Executive</option>
+                  </select>
+                </div>
+              )}
+
+              {/* Opportunity Filters */}
+              {activeTable === 'Opportunity' && (
+                <>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+                    <label style={{ fontSize: '0.7rem', color: 'var(--text-muted)', fontWeight: 600 }}>Stage</label>
+                    <select
+                      className="form-select"
+                      style={{ width: 'auto', minWidth: 140, padding: '0.35rem 0.65rem', fontSize: '0.8rem' }}
+                      value={filterStage}
+                      onChange={(e) => setFilterStage(e.target.value)}
+                    >
+                      <option value="">All Stages</option>
+                      <option value="Prospecting">Prospecting</option>
+                      <option value="Qualification">Qualification</option>
+                      <option value="Needs Analysis">Needs Analysis</option>
+                      <option value="Value Proposition">Value Proposition</option>
+                      <option value="Proposal/Price Quote">Proposal/Price Quote</option>
+                      <option value="Negotiation/Review">Negotiation/Review</option>
+                      <option value="Closed Won">Closed Won</option>
+                      <option value="Closed Lost">Closed Lost</option>
+                    </select>
+                  </div>
+
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+                    <label style={{ fontSize: '0.7rem', color: 'var(--text-muted)', fontWeight: 600 }}>Deal Type</label>
+                    <select
+                      className="form-select"
+                      style={{ width: 'auto', minWidth: 140, padding: '0.35rem 0.65rem', fontSize: '0.8rem' }}
+                      value={filterType}
+                      onChange={(e) => setFilterType(e.target.value)}
+                    >
+                      <option value="">All Deal Types</option>
+                      <option value="New Customer">New Customer</option>
+                      <option value="Existing Customer - Upgrade">Existing Customer - Upgrade</option>
+                      <option value="Existing Customer - Replacement">Existing Customer - Replacement</option>
+                    </select>
+                  </div>
+                </>
+              )}
+
+              {/* Lead Filters */}
+              {activeTable === 'Lead' && (
+                <>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+                    <label style={{ fontSize: '0.7rem', color: 'var(--text-muted)', fontWeight: 600 }}>Status</label>
+                    <select
+                      className="form-select"
+                      style={{ width: 'auto', minWidth: 140, padding: '0.35rem 0.65rem', fontSize: '0.8rem' }}
+                      value={filterStatus}
+                      onChange={(e) => setFilterStatus(e.target.value)}
+                    >
+                      <option value="">All Statuses</option>
+                      <option value="Open - Not Contacted">Open - Not Contacted</option>
+                      <option value="Working - Contacted">Working - Contacted</option>
+                      <option value="Closed - Converted">Closed - Converted</option>
+                      <option value="Closed - Not Converted">Closed - Not Converted</option>
+                    </select>
+                  </div>
+
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+                    <label style={{ fontSize: '0.7rem', color: 'var(--text-muted)', fontWeight: 600 }}>Industry</label>
+                    <select
+                      className="form-select"
+                      style={{ width: 'auto', minWidth: 140, padding: '0.35rem 0.65rem', fontSize: '0.8rem' }}
+                      value={filterIndustry}
+                      onChange={(e) => setFilterIndustry(e.target.value)}
+                    >
+                      <option value="">All Industries</option>
+                      <option value="Technology">Technology</option>
+                      <option value="Finance">Finance</option>
+                      <option value="Healthcare">Healthcare</option>
+                      <option value="Manufacturing">Manufacturing</option>
+                      <option value="Consulting">Consulting</option>
+                    </select>
+                  </div>
+                </>
+              )}
+
+              {/* Synced By User Filter */}
+              {uniqueSyncedUsers.length > 0 && (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+                  <label style={{ fontSize: '0.7rem', color: 'var(--text-muted)', fontWeight: 600 }}>Synced By</label>
+                  <select
+                    className="form-select"
+                    style={{ width: 'auto', minWidth: 150, padding: '0.35rem 0.65rem', fontSize: '0.8rem' }}
+                    value={filterSyncedBy}
+                    onChange={(e) => setFilterSyncedBy(e.target.value)}
+                    title="Filter records by user who synced them"
+                  >
+                    <option value="">All Members ({uniqueSyncedUsers.length})</option>
+                    {uniqueSyncedUsers.map((user) => (
+                      <option key={user} value={user}>
+                        {user.includes('@') ? user.split('@')[0] : user}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
+            </div>
           </div>
+        )}
 
-          {/* Origin Filter (Applies to all objects) */}
-          <select
-            className="form-select"
-            style={{ width: 'auto', padding: '0.3rem 0.6rem', fontSize: '0.8rem' }}
-            value={filterOrigin}
-            onChange={(e) => setFilterOrigin(e.target.value)}
-          >
-            <option value="all">All Origins</option>
-            <option value="custom">Created in Custom App</option>
-            <option value="salesforce">Salesforce Synced</option>
-          </select>
+        {/* Active Filter Chips Summary (when filter panel is collapsed) */}
+        {!showFilters && hasActiveFilters && (
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '0.5rem',
+            flexWrap: 'wrap',
+            marginTop: '0.85rem',
+            paddingTop: '0.75rem',
+            borderTop: '1px solid var(--border-subtle)',
+            fontSize: '0.78rem',
+            animation: 'fadeIn 0.15s ease'
+          }}>
+            <span style={{ color: 'var(--text-muted)', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
+              <Filter size={12} color="var(--oodles-primary)" /> Active Filters:
+            </span>
 
-          {/* Account Filters */}
-          {activeTable === 'Account' && (
-            <>
-              <select
-                className="form-select"
-                style={{ width: 'auto', padding: '0.3rem 0.6rem', fontSize: '0.8rem' }}
-                value={filterIndustry}
-                onChange={(e) => setFilterIndustry(e.target.value)}
-              >
-                <option value="">All Industries</option>
-                <option value="Technology">Technology</option>
-                <option value="Finance">Finance</option>
-                <option value="Healthcare">Healthcare</option>
-                <option value="Manufacturing">Manufacturing</option>
-                <option value="Consulting">Consulting</option>
-                <option value="Education">Education</option>
-                <option value="Energy">Energy</option>
-                <option value="Retail">Retail</option>
-              </select>
+            {filterOrigin !== 'all' && (
+              <span className="filter-chip">
+                <span>Origin: <strong>{filterOrigin === 'custom' ? 'Custom App' : 'Salesforce'}</strong></span>
+                <button type="button" onClick={() => setFilterOrigin('all')} title="Remove filter"><X size={12} /></button>
+              </span>
+            )}
+            {filterIndustry && (
+              <span className="filter-chip">
+                <span>Industry: <strong>{filterIndustry}</strong></span>
+                <button type="button" onClick={() => setFilterIndustry('')} title="Remove filter"><X size={12} /></button>
+              </span>
+            )}
+            {filterType && (
+              <span className="filter-chip">
+                <span>Type: <strong>{filterType}</strong></span>
+                <button type="button" onClick={() => setFilterType('')} title="Remove filter"><X size={12} /></button>
+              </span>
+            )}
+            {filterStage && (
+              <span className="filter-chip">
+                <span>Stage: <strong>{filterStage}</strong></span>
+                <button type="button" onClick={() => setFilterStage('')} title="Remove filter"><X size={12} /></button>
+              </span>
+            )}
+            {filterStatus && (
+              <span className="filter-chip">
+                <span>Status: <strong>{filterStatus}</strong></span>
+                <button type="button" onClick={() => setFilterStatus('')} title="Remove filter"><X size={12} /></button>
+              </span>
+            )}
+            {filterDepartment && (
+              <span className="filter-chip">
+                <span>Dept: <strong>{filterDepartment}</strong></span>
+                <button type="button" onClick={() => setFilterDepartment('')} title="Remove filter"><X size={12} /></button>
+              </span>
+            )}
+            {filterSyncedBy && (
+              <span className="filter-chip">
+                <span>Synced by: <strong>{filterSyncedBy.includes('@') ? filterSyncedBy.split('@')[0] : filterSyncedBy}</strong></span>
+                <button type="button" onClick={() => setFilterSyncedBy('')} title="Remove filter"><X size={12} /></button>
+              </span>
+            )}
 
-              <select
-                className="form-select"
-                style={{ width: 'auto', padding: '0.3rem 0.6rem', fontSize: '0.8rem' }}
-                value={filterType}
-                onChange={(e) => setFilterType(e.target.value)}
-              >
-                <option value="">All Types</option>
-                <option value="Prospect">Prospect</option>
-                <option value="Customer - Direct">Customer - Direct</option>
-                <option value="Customer - Channel">Customer - Channel</option>
-                <option value="Channel Partner / Reseller">Channel Partner / Reseller</option>
-              </select>
-            </>
-          )}
-
-          {/* Contact Filters */}
-          {activeTable === 'Contact' && (
-            <select
-              className="form-select"
-              style={{ width: 'auto', padding: '0.3rem 0.6rem', fontSize: '0.8rem' }}
-              value={filterDepartment}
-              onChange={(e) => setFilterDepartment(e.target.value)}
-            >
-              <option value="">All Departments</option>
-              <option value="Engineering">Engineering</option>
-              <option value="Sales">Sales</option>
-              <option value="Marketing">Marketing</option>
-              <option value="Operations">Operations</option>
-              <option value="Finance">Finance</option>
-              <option value="Executive">Executive</option>
-            </select>
-          )}
-
-          {/* Opportunity Filters */}
-          {activeTable === 'Opportunity' && (
-            <>
-              <select
-                className="form-select"
-                style={{ width: 'auto', padding: '0.3rem 0.6rem', fontSize: '0.8rem' }}
-                value={filterStage}
-                onChange={(e) => setFilterStage(e.target.value)}
-              >
-                <option value="">All Stages</option>
-                <option value="Prospecting">Prospecting</option>
-                <option value="Qualification">Qualification</option>
-                <option value="Needs Analysis">Needs Analysis</option>
-                <option value="Value Proposition">Value Proposition</option>
-                <option value="Proposal/Price Quote">Proposal/Price Quote</option>
-                <option value="Negotiation/Review">Negotiation/Review</option>
-                <option value="Closed Won">Closed Won</option>
-                <option value="Closed Lost">Closed Lost</option>
-              </select>
-
-              <select
-                className="form-select"
-                style={{ width: 'auto', padding: '0.3rem 0.6rem', fontSize: '0.8rem' }}
-                value={filterType}
-                onChange={(e) => setFilterType(e.target.value)}
-              >
-                <option value="">All Deal Types</option>
-                <option value="New Customer">New Customer</option>
-                <option value="Existing Customer - Upgrade">Existing Customer - Upgrade</option>
-                <option value="Existing Customer - Replacement">Existing Customer - Replacement</option>
-              </select>
-            </>
-          )}
-
-          {/* Lead Filters */}
-          {activeTable === 'Lead' && (
-            <>
-              <select
-                className="form-select"
-                style={{ width: 'auto', padding: '0.3rem 0.6rem', fontSize: '0.8rem' }}
-                value={filterStatus}
-                onChange={(e) => setFilterStatus(e.target.value)}
-              >
-                <option value="">All Statuses</option>
-                <option value="Open - Not Contacted">Open - Not Contacted</option>
-                <option value="Working - Contacted">Working - Contacted</option>
-                <option value="Closed - Converted">Closed - Converted</option>
-                <option value="Closed - Not Converted">Closed - Not Converted</option>
-              </select>
-
-              <select
-                className="form-select"
-                style={{ width: 'auto', padding: '0.3rem 0.6rem', fontSize: '0.8rem' }}
-                value={filterIndustry}
-                onChange={(e) => setFilterIndustry(e.target.value)}
-              >
-                <option value="">All Industries</option>
-                <option value="Technology">Technology</option>
-                <option value="Finance">Finance</option>
-                <option value="Healthcare">Healthcare</option>
-                <option value="Manufacturing">Manufacturing</option>
-                <option value="Consulting">Consulting</option>
-              </select>
-            </>
-          )}
-
-          {/* Synced By User Filter */}
-          {uniqueSyncedUsers.length > 0 && (
-            <select
-              className="form-select"
-              style={{ width: 'auto', padding: '0.3rem 0.6rem', fontSize: '0.8rem' }}
-              value={filterSyncedBy}
-              onChange={(e) => setFilterSyncedBy(e.target.value)}
-              title="Filter records by user who synced them"
-            >
-              <option value="">All Synced Members ({uniqueSyncedUsers.length})</option>
-              {uniqueSyncedUsers.map((user) => (
-                <option key={user} value={user}>
-                  Synced by: {user.includes('@') ? user.split('@')[0] : user}
-                </option>
-              ))}
-            </select>
-          )}
-
-          {/* Reset Filters Button */}
-          {hasActiveFilters && (
             <button
+              type="button"
               onClick={resetFilters}
-              className="btn btn-secondary btn-sm"
-              style={{ fontSize: '0.75rem', padding: '0.2rem 0.5rem', color: '#f87171' }}
+              style={{
+                background: 'none',
+                border: 'none',
+                color: '#f87171',
+                fontSize: '0.74rem',
+                cursor: 'pointer',
+                padding: '0.1rem 0.3rem',
+                textDecoration: 'underline'
+              }}
             >
-              <X size={12} /> Clear Filters
+              Clear all
             </button>
-          )}
 
-          <div style={{ marginLeft: 'auto', fontSize: '0.78rem', color: 'var(--text-muted)' }}>
-            Showing {filteredRecords.length} matching rows
+            <span style={{ marginLeft: 'auto', color: 'var(--text-muted)', fontSize: '0.75rem' }}>
+              Showing {filteredRecords.length} matching rows
+            </span>
           </div>
-        </div>
+        )}
       </div>
 
       {/* Records Table */}
       <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
-        <div style={{ overflowX: 'auto' }}>
+        <div className="table-responsive-container">
           <table className="data-table">
             <thead>
               {/* ACCOUNT TABLE HEADERS */}
@@ -816,7 +1099,9 @@ export default function DataExplorer({ onOpenDetails, onOpenCreate, onOpenEdit, 
           borderTop: '1px solid var(--border-color)',
           background: 'rgba(0, 0, 0, 0.15)',
           fontSize: '0.82rem',
-          color: 'var(--text-secondary)'
+          color: 'var(--text-secondary)',
+          flexWrap: 'wrap',
+          gap: '0.75rem'
         }}>
           <div>
             Showing {filteredRecords.length} of {totalRecords} records in <strong>{activeOrgName || activeOrgId}</strong>

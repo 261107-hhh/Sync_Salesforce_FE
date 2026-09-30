@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { useAuth } from '../context/AuthContext';
 import api from '../api/client';
 import {
@@ -16,7 +16,12 @@ import {
   RotateCw,
   Building2,
   FileCode,
-  FileSpreadsheet
+  FileSpreadsheet,
+  Copy,
+  Check,
+  X,
+  Activity,
+  Trash2
 } from 'lucide-react';
 
 export default function SyncLogsTab({ sfStatus, onNavigateToConnection, onTriggerSync }) {
@@ -30,8 +35,19 @@ export default function SyncLogsTab({ sfStatus, onNavigateToConnection, onTrigge
   const [logFilter, setLogFilter] = useState('all'); // 'all' | 'error' | 'success' | 'info'
   const [retryingObject, setRetryingObject] = useState(null);
   const [expandedHistoryId, setExpandedHistoryId] = useState(null);
+  const [copied, setCopied] = useState(false);
+  const [clearedLogIndex, setClearedLogIndex] = useState(0);
+  const [lastJobId, setLastJobId] = useState(null);
 
   const prevStatusRef = useRef(null);
+
+  // When a new job begins, reset clearedLogIndex so user sees fresh logs
+  useEffect(() => {
+    if (syncStatus?.id && syncStatus.id !== lastJobId) {
+      setLastJobId(syncStatus.id);
+      setClearedLogIndex(0);
+    }
+  }, [syncStatus?.id, lastJobId]);
 
   useEffect(() => {
     fetchStatus();
@@ -168,14 +184,53 @@ export default function SyncLogsTab({ sfStatus, onNavigateToConnection, onTrigge
     URL.revokeObjectURL(url);
   };
 
-  // Filter logs
-  const filteredLogs = (syncStatus?.logs || []).filter((l) => {
-    if (logFilter !== 'all' && l.level !== logFilter) return false;
-    if (logSearch.trim()) {
-      return l.message.toLowerCase().includes(logSearch.toLowerCase());
+  const formatLogDisplayTime = (ts) => {
+    if (!ts) return new Date().toLocaleTimeString();
+    const d = new Date(ts);
+    if (!isNaN(d.getTime())) return d.toLocaleTimeString();
+    return String(ts);
+  };
+
+  // Copy current filtered logs to clipboard
+  const handleCopyLogs = () => {
+    const logs = filteredLogs.map((l) => `[${formatLogDisplayTime(l.timestamp)}] [${(l.level || 'info').toUpperCase()}] ${l.message}`).join('\n');
+    navigator.clipboard.writeText(logs);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
+  // Clear current log messages from terminal view
+  const handleClearLogs = () => {
+    setClearedLogIndex((syncStatus?.logs || []).length);
+  };
+
+  // Restore cleared logs
+  const handleRestoreLogs = () => {
+    setClearedLogIndex(0);
+  };
+
+  const rawLogs = useMemo(() => syncStatus?.logs || [], [syncStatus?.logs]);
+  const allLogs = useMemo(() => {
+    if (clearedLogIndex > 0) {
+      return rawLogs.slice(clearedLogIndex);
     }
-    return true;
-  });
+    return rawLogs;
+  }, [rawLogs, clearedLogIndex]);
+
+  const errorCount = useMemo(() => allLogs.filter((l) => l.level === 'error').length, [allLogs]);
+  const successCount = useMemo(() => allLogs.filter((l) => l.level === 'success').length, [allLogs]);
+  const infoCount = useMemo(() => allLogs.filter((l) => l.level === 'info' || !l.level).length, [allLogs]);
+
+  // Filter logs with memoization
+  const filteredLogs = useMemo(() => {
+    return allLogs.filter((l) => {
+      if (logFilter !== 'all' && l.level !== logFilter) return false;
+      if (logSearch.trim()) {
+        return l.message.toLowerCase().includes(logSearch.toLowerCase());
+      }
+      return true;
+    });
+  }, [allLogs, logFilter, logSearch]);
 
   // Filter history
   const filteredHistory = history.filter((h) => {
@@ -191,7 +246,7 @@ export default function SyncLogsTab({ sfStatus, onNavigateToConnection, onTrigge
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-      
+
       {/* Header Bar */}
       <div className="card" style={{ padding: '1.25rem 1.5rem' }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '1rem' }}>
@@ -208,7 +263,7 @@ export default function SyncLogsTab({ sfStatus, onNavigateToConnection, onTrigge
           </div>
 
           {/* Export Action Buttons */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
+          <div className="sync-logs-header-actions">
             <button
               onClick={handleExportLogsJson}
               className="btn btn-secondary btn-sm"
@@ -288,63 +343,99 @@ export default function SyncLogsTab({ sfStatus, onNavigateToConnection, onTrigge
         </div>
       )}
 
-      {/* Current Job Overview & Object Breakdown Cards */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr', gap: '1.25rem' }}>
-        
-        {/* Current Job Status Summary */}
-        <div className="card">
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1rem' }}>
-            <h3 style={{ fontSize: '1.05rem', fontWeight: 600, color: 'var(--text-primary)' }}>
-              Current / Last Job Details
+      {/* Current Job Status & Execution Breakdown Overview Card */}
+      <div className="card" style={{ padding: '1.25rem 1.5rem' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.25rem', flexWrap: 'wrap', gap: '0.75rem' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
+            <Activity size={18} color="var(--oodles-primary)" />
+            <h3 style={{ fontSize: '1.05rem', fontWeight: 700, color: 'var(--text-primary)', margin: 0 }}>
+              Current Job Execution Status
             </h3>
-            <span className={`badge ${isRunning ? 'badge-info' : (failedObjects.length > 0 ? 'badge-danger' : 'badge-success')}`}>
+            {syncStatus?.startTime && (
+              <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                Started: {new Date(syncStatus.startTime).toLocaleTimeString()}
+              </span>
+            )}
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+            <span className={`badge ${isRunning ? 'badge-info' : (failedObjects.length > 0 ? 'badge-danger' : 'badge-success')}`} style={{ fontSize: '0.78rem', padding: '0.25rem 0.75rem' }}>
+              {isRunning && <RefreshCw size={12} className="spin" style={{ marginRight: '0.35rem' }} />}
               {syncStatus?.status ? syncStatus.status.toUpperCase() : 'IDLE'}
             </span>
+            {failedObjects.length > 0 && (
+              <button
+                onClick={() => handleRetry(failedObjects.map(f => f.object))}
+                disabled={isRunning || retryingObject !== null}
+                className="btn btn-primary btn-sm"
+                style={{ background: 'linear-gradient(135deg, #dc2626, #ef4444)', borderColor: '#ef4444', fontSize: '0.75rem' }}
+              >
+                <RotateCw size={12} className={retryingObject ? 'spin' : ''} />
+                Retry Failed
+              </button>
+            )}
+          </div>
+        </div>
+
+        {/* 4 Stat Cards in a responsive grid */}
+        <div style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))',
+          gap: '0.75rem',
+          marginBottom: '1rem'
+        }}>
+          <div style={{ background: 'var(--table-header-bg)', padding: '0.75rem', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-color)', minWidth: 0 }}>
+            <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 600 }}>Sync Mode</div>
+            <div style={{ fontSize: '1rem', fontWeight: 700, color: '#c084fc', marginTop: '0.2rem' }}>
+              {syncStatus?.mode ? syncStatus.mode.toUpperCase() : 'DELTA'}
+            </div>
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '0.75rem', marginBottom: '1.25rem' }}>
-            <div style={{ background: 'var(--bg-input)', padding: '0.75rem', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-color)' }}>
-              <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', textTransform: 'uppercase' }}>Mode</div>
-              <div style={{ fontSize: '1rem', fontWeight: 600, color: '#c084fc', marginTop: '0.2rem' }}>
-                {syncStatus?.mode ? syncStatus.mode.toUpperCase() : 'DELTA'}
-              </div>
-            </div>
-
-            <div style={{ background: 'var(--bg-input)', padding: '0.75rem', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-color)' }}>
-              <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', textTransform: 'uppercase' }}>Upserted</div>
-              <div style={{ fontSize: '1.15rem', fontWeight: 700, color: '#34d399', marginTop: '0.2rem' }}>
-                {syncStatus?.totalRecordsSynced || 0}
-              </div>
-            </div>
-
-            <div style={{ background: 'var(--bg-input)', padding: '0.75rem', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-color)' }}>
-              <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', textTransform: 'uppercase' }}>Progress</div>
-              <div style={{ fontSize: '1.15rem', fontWeight: 700, color: '#38bdf8', marginTop: '0.2rem' }}>
-                {syncStatus?.progressPercent || 0}%
-              </div>
+          <div style={{ background: 'var(--table-header-bg)', padding: '0.75rem', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-color)', minWidth: 0 }}>
+            <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 600 }}>Records Upserted</div>
+            <div style={{ fontSize: '1.15rem', fontWeight: 700, color: '#34d399', marginTop: '0.2rem' }}>
+              {syncStatus?.totalRecordsSynced || 0}
             </div>
           </div>
 
-          {/* Progress Bar */}
-          <div style={{ width: '100%', height: 6, background: 'var(--bg-input)', borderRadius: 3, overflow: 'hidden', marginBottom: '1.25rem' }}>
-            <div style={{
-              width: `${syncStatus?.progressPercent || 0}%`,
-              height: '100%',
-              background: 'linear-gradient(90deg, #0284c7, #38bdf8)',
-              transition: 'width 0.3s ease'
-            }} />
+          <div style={{ background: 'var(--table-header-bg)', padding: '0.75rem', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-color)', minWidth: 0 }}>
+            <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 600 }}>Execution Progress</div>
+            <div style={{ fontSize: '1.15rem', fontWeight: 700, color: '#38bdf8', marginTop: '0.2rem' }}>
+              {syncStatus?.progressPercent || 0}%
+            </div>
           </div>
 
-          {/* Object Status Breakdown List */}
-          <h4 style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '0.5rem' }}>
-            Object Execution Breakdown
-          </h4>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+          <div style={{ background: 'var(--table-header-bg)', padding: '0.75rem', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-color)', minWidth: 0 }}>
+            <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 600 }}>Objects Status</div>
+            <div style={{ fontSize: '0.95rem', fontWeight: 600, color: failedObjects.length > 0 ? '#f87171' : '#34d399', marginTop: '0.2rem' }}>
+              {failedObjects.length > 0 ? `${failedObjects.length} Failed` : (isRunning ? 'Processing...' : 'All Healthy')}
+            </div>
+          </div>
+        </div>
+
+        {/* Progress Bar */}
+        <div style={{ width: '100%', height: 6, background: 'var(--bg-input)', borderRadius: 3, overflow: 'hidden', marginBottom: '1.25rem' }}>
+          <div style={{
+            width: `${syncStatus?.progressPercent || 0}%`,
+            height: '100%',
+            background: 'linear-gradient(90deg, #0284c7, #38bdf8)',
+            transition: 'width 0.3s ease'
+          }} />
+        </div>
+
+        {/* Object Execution Breakdown Pills */}
+        <div>
+          <span style={{ fontSize: '0.74rem', color: 'var(--text-muted)', display: 'block', marginBottom: '0.5rem', textTransform: 'uppercase', fontWeight: 600 }}>
+            Target Object Status Breakdown
+          </span>
+          <div style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+            gap: '0.65rem'
+          }}>
             {['Account', 'Contact', 'Opportunity', 'Lead'].map((obj) => {
               const detail = syncStatus?.details ? syncStatus.details[obj] : null;
               const isObjError = detail?.status === 'error' || detail?.error;
               const isObjSuccess = detail?.status === 'success' || (detail && !detail.error && detail.recordsUpserted !== undefined);
-              const isObjPending = !detail;
 
               return (
                 <div
@@ -353,29 +444,31 @@ export default function SyncLogsTab({ sfStatus, onNavigateToConnection, onTrigge
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'space-between',
-                    padding: '0.55rem 0.85rem',
-                    borderRadius: 'var(--radius-sm)',
-                    background: 'rgba(255, 255, 255, 0.02)',
-                    border: `1px solid ${isObjError ? 'rgba(239, 68, 68, 0.3)' : 'var(--border-subtle)'}`,
-                    fontSize: '0.82rem'
+                    padding: '0.6rem 0.85rem',
+                    borderRadius: 'var(--radius-md)',
+                    background: isObjError ? 'rgba(239, 68, 68, 0.08)' : (isObjSuccess ? 'rgba(52, 211, 153, 0.06)' : 'var(--table-header-bg)'),
+                    border: `1px solid ${isObjError ? 'rgba(239, 68, 68, 0.35)' : (isObjSuccess ? 'rgba(52, 211, 153, 0.25)' : 'var(--border-color)')}`,
+                    fontSize: '0.82rem',
+                    minWidth: 0,
+                    gap: '0.5rem'
                   }}
                 >
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.55rem', minWidth: 0, overflow: 'hidden' }}>
                     {isObjError ? (
-                      <XCircle size={15} color="#f87171" />
+                      <XCircle size={15} color="#f87171" style={{ flexShrink: 0 }} />
                     ) : isObjSuccess ? (
-                      <CheckCircle2 size={15} color="#34d399" />
+                      <CheckCircle2 size={15} color="#34d399" style={{ flexShrink: 0 }} />
                     ) : (
-                      <Clock size={15} color="var(--text-muted)" />
+                      <Clock size={15} color="var(--text-muted)" style={{ flexShrink: 0 }} />
                     )}
-                    <span style={{ fontWeight: 600, color: isObjError ? '#f87171' : '#fff' }}>{obj}</span>
+                    <span style={{ fontWeight: 600, color: isObjError ? '#f87171' : 'var(--text-primary)', whiteSpace: 'nowrap' }}>{obj}</span>
                     {isObjError && (
-                      <span style={{ fontSize: '0.72rem', color: '#fca5a5' }}>
+                      <span style={{ fontSize: '0.72rem', color: '#fca5a5', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={detail?.error}>
                         ({detail?.error || 'Failed'})
                       </span>
                     )}
                     {isObjSuccess && (
-                      <span style={{ fontSize: '0.72rem', color: '#34d399' }}>
+                      <span style={{ fontSize: '0.72rem', color: '#34d399', whiteSpace: 'nowrap' }}>
                         ({detail?.recordsUpserted ?? 0} upserted)
                       </span>
                     )}
@@ -386,10 +479,10 @@ export default function SyncLogsTab({ sfStatus, onNavigateToConnection, onTrigge
                       onClick={() => handleRetry(obj)}
                       disabled={isRunning || retryingObject === obj}
                       className="btn btn-secondary btn-sm"
-                      style={{ fontSize: '0.72rem', padding: '0.2rem 0.6rem', color: '#f87171', borderColor: 'rgba(239, 68, 68, 0.4)' }}
+                      style={{ fontSize: '0.7rem', padding: '0.15rem 0.5rem', color: '#f87171', borderColor: 'rgba(239, 68, 68, 0.4)', flexShrink: 0 }}
                     >
-                      <RotateCw size={12} className={retryingObject === obj ? 'spin' : ''} />
-                      Retry {obj}
+                      <RotateCw size={11} className={retryingObject === obj ? 'spin' : ''} />
+                      Retry
                     </button>
                   )}
                 </div>
@@ -397,97 +490,295 @@ export default function SyncLogsTab({ sfStatus, onNavigateToConnection, onTrigge
             })}
           </div>
         </div>
+      </div>
 
-        {/* Live Execution Logs Terminal */}
-        <div className="card" style={{ display: 'flex', flexDirection: 'column', minHeight: 380 }}>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.75rem', flexWrap: 'wrap', gap: '0.5rem' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--text-primary)', fontSize: '0.95rem', fontWeight: 600 }}>
-              <Terminal size={16} color="var(--oodles-primary)" />
-              <span>Live Terminal Logs</span>
+      {/* Live Execution Logs Terminal Card (Full width, prominent, responsive) */}
+      <div className="card" style={{ display: 'flex', flexDirection: 'column', padding: '1.25rem 1.5rem', minHeight: 440 }}>
+        {/* Terminal Header */}
+        <div style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          marginBottom: '0.85rem',
+          flexWrap: 'wrap',
+          gap: '0.75rem'
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', flexWrap: 'wrap' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              <Terminal size={18} color="var(--oodles-primary)" />
+              <span style={{ fontSize: '1.05rem', fontWeight: 700, color: 'var(--text-primary)' }}>
+                Live Terminal Execution Logs
+              </span>
             </div>
-
-            {/* Level Filter Pills */}
-            <div style={{ display: 'flex', gap: '0.3rem' }}>
-              {['all', 'error', 'success', 'info'].map((lvl) => (
-                <button
-                  key={lvl}
-                  type="button"
-                  onClick={() => setLogFilter(lvl)}
-                  style={{
-                    padding: '0.15rem 0.55rem',
-                    borderRadius: 4,
-                    border: 'none',
-                    background: logFilter === lvl ? '#38bdf8' : 'rgba(255, 255, 255, 0.06)',
-                    color: logFilter === lvl ? '#000' : 'var(--text-muted)',
-                    fontSize: '0.72rem',
-                    fontWeight: 600,
-                    cursor: 'pointer',
-                    textTransform: 'uppercase'
-                  }}
-                >
-                  {lvl}
-                </button>
-              ))}
-            </div>
+            <span style={{
+              fontSize: '0.7rem',
+              padding: '0.15rem 0.55rem',
+              borderRadius: '9999px',
+              fontWeight: 600,
+              background: isRunning ? 'rgba(56, 189, 248, 0.15)' : 'rgba(255, 255, 255, 0.05)',
+              color: isRunning ? '#38bdf8' : 'var(--text-muted)',
+              border: `1px solid ${isRunning ? 'rgba(56, 189, 248, 0.3)' : 'var(--border-subtle)'}`,
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.35rem'
+            }}>
+              <span style={{
+                width: 6,
+                height: 6,
+                borderRadius: '50%',
+                background: isRunning ? '#38bdf8' : '#94a3b8',
+                display: 'inline-block',
+                boxShadow: isRunning ? '0 0 8px #38bdf8' : 'none'
+              }} />
+              {isRunning ? 'STREAMING' : 'IDLE'}
+            </span>
+            <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+              ({allLogs.length} total)
+            </span>
           </div>
 
-          {/* Terminal Search */}
-          <div style={{ position: 'relative', marginBottom: '0.65rem' }}>
+          {/* Level Filter Pills & Action Buttons */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', flexWrap: 'wrap' }}>
+            {/* Level Filter Buttons */}
+            <div style={{ display: 'flex', background: 'var(--bg-input)', padding: '0.2rem', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-color)', gap: '0.2rem', flexWrap: 'wrap' }}>
+              <button
+                type="button"
+                onClick={() => setLogFilter('all')}
+                style={{
+                  padding: '0.2rem 0.55rem',
+                  borderRadius: 'var(--radius-sm)',
+                  border: 'none',
+                  background: logFilter === 'all' ? 'var(--oodles-primary)' : 'transparent',
+                  color: logFilter === 'all' ? '#fff' : 'var(--text-muted)',
+                  fontSize: '0.72rem',
+                  fontWeight: 600,
+                  cursor: 'pointer'
+                }}
+              >
+                ALL ({allLogs.length})
+              </button>
+              <button
+                type="button"
+                onClick={() => setLogFilter('error')}
+                style={{
+                  padding: '0.2rem 0.55rem',
+                  borderRadius: 'var(--radius-sm)',
+                  border: 'none',
+                  background: logFilter === 'error' ? '#ef4444' : 'transparent',
+                  color: logFilter === 'error' ? '#fff' : (errorCount > 0 ? '#f87171' : 'var(--text-muted)'),
+                  fontSize: '0.72rem',
+                  fontWeight: 600,
+                  cursor: 'pointer'
+                }}
+              >
+                ERRORS ({errorCount})
+              </button>
+              <button
+                type="button"
+                onClick={() => setLogFilter('success')}
+                style={{
+                  padding: '0.2rem 0.55rem',
+                  borderRadius: 'var(--radius-sm)',
+                  border: 'none',
+                  background: logFilter === 'success' ? '#10b981' : 'transparent',
+                  color: logFilter === 'success' ? '#fff' : (successCount > 0 ? '#34d399' : 'var(--text-muted)'),
+                  fontSize: '0.72rem',
+                  fontWeight: 600,
+                  cursor: 'pointer'
+                }}
+              >
+                SUCCESS ({successCount})
+              </button>
+              <button
+                type="button"
+                onClick={() => setLogFilter('info')}
+                style={{
+                  padding: '0.2rem 0.55rem',
+                  borderRadius: 'var(--radius-sm)',
+                  border: 'none',
+                  background: logFilter === 'info' ? '#0ea5e9' : 'transparent',
+                  color: logFilter === 'info' ? '#fff' : 'var(--text-muted)',
+                  fontSize: '0.72rem',
+                  fontWeight: 600,
+                  cursor: 'pointer'
+                }}
+              >
+                INFO ({infoCount})
+              </button>
+            </div>
+
+            {/* Copy Logs Button */}
+            <button
+              type="button"
+              onClick={handleCopyLogs}
+              disabled={filteredLogs.length === 0}
+              className="btn btn-secondary btn-sm"
+              style={{ fontSize: '0.72rem', padding: '0.25rem 0.55rem' }}
+              title="Copy visible logs to clipboard"
+            >
+              {copied ? <Check size={12} color="#34d399" /> : <Copy size={12} />}
+              <span>{copied ? 'Copied!' : 'Copy'}</span>
+            </button>
+
+            {/* Clear Logs Button */}
+            <button
+              type="button"
+              onClick={handleClearLogs}
+              disabled={allLogs.length === 0}
+              className="btn btn-secondary btn-sm"
+              style={{
+                fontSize: '0.72rem',
+                padding: '0.25rem 0.55rem',
+                color: allLogs.length > 0 ? '#f87171' : 'var(--text-muted)',
+                borderColor: allLogs.length > 0 ? 'rgba(239, 68, 68, 0.35)' : 'var(--border-color)',
+                cursor: allLogs.length === 0 ? 'not-allowed' : 'pointer'
+              }}
+              title={allLogs.length === 0 ? "Terminal logs are already empty" : "Clear all logs from terminal view"}
+            >
+              <Trash2 size={12} />
+              <span>Clear Logs</span>
+            </button>
+
+            {/* Restore Logs Button if cleared */}
+            {clearedLogIndex > 0 && (
+              <button
+                type="button"
+                onClick={handleRestoreLogs}
+                className="btn btn-secondary btn-sm"
+                style={{ fontSize: '0.72rem', padding: '0.25rem 0.55rem', color: '#38bdf8', borderColor: 'rgba(56, 189, 248, 0.35)' }}
+                title="Restore cleared logs"
+              >
+                <RotateCw size={12} />
+                <span>Restore ({clearedLogIndex})</span>
+              </button>
+            )}
+          </div>
+        </div>
+
+        {/* Terminal Search Row */}
+        <div style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          gap: '0.75rem',
+          marginBottom: '0.75rem',
+          flexWrap: 'wrap'
+        }}>
+          <div style={{ position: 'relative', flex: '1 1 240px', minWidth: 200, maxWidth: 440 }}>
             <input
               type="text"
-              placeholder="Search terminal logs..."
+              placeholder="Search terminal logs (e.g. Account, ERROR, WHERE)..."
               value={logSearch}
               onChange={(e) => setLogSearch(e.target.value)}
               className="form-input"
-              style={{ fontSize: '0.78rem', padding: '0.35rem 0.75rem 0.35rem 2rem' }}
+              style={{ fontSize: '0.8rem', padding: '0.4rem 2rem 0.4rem 2.1rem', height: 34 }}
             />
-            <Search size={13} color="var(--text-muted)" style={{ position: 'absolute', left: '0.65rem', top: '50%', transform: 'translateY(-50%)' }} />
-          </div>
-
-          {/* Log Stream Window */}
-          <div style={{
-            flex: 1,
-            background: '#040711',
-            border: '1px solid var(--border-color)',
-            borderRadius: 'var(--radius-md)',
-            padding: '0.85rem',
-            fontFamily: 'var(--font-mono)',
-            fontSize: '0.76rem',
-            overflowY: 'auto',
-            maxHeight: 280,
-            display: 'flex',
-            flexDirection: 'column',
-            gap: '0.3rem'
-          }}>
-            {filteredLogs.length === 0 ? (
-              <div style={{ color: 'var(--text-muted)', textAlign: 'center', padding: '2rem' }}>
-                No log entries match your filter.
-              </div>
-            ) : (
-              filteredLogs.map((l, i) => {
-                const isErr = l.level === 'error';
-                const isSucc = l.level === 'success';
-                return (
-                  <div key={i} style={{ color: isErr ? '#f87171' : (isSucc ? '#34d399' : '#94a3b8'), lineHeight: 1.4 }}>
-                    <span style={{ color: '#475569', marginRight: '0.4rem' }}>
-                      [{new Date(l.timestamp).toLocaleTimeString()}]
-                    </span>
-                    <span style={{
-                      fontSize: '0.68rem',
-                      padding: '1px 4px',
-                      borderRadius: 3,
-                      marginRight: '0.4rem',
-                      background: isErr ? 'rgba(239, 68, 68, 0.2)' : (isSucc ? 'rgba(52, 211, 153, 0.2)' : 'rgba(148, 163, 184, 0.1)'),
-                      color: isErr ? '#f87171' : (isSucc ? '#34d399' : '#94a3b8')
-                    }}>
-                      {(l.level || 'info').toUpperCase()}
-                    </span>
-                    <span>{l.message}</span>
-                  </div>
-                );
-              })
+            <Search size={13} color="var(--text-muted)" style={{ position: 'absolute', left: '0.7rem', top: '50%', transform: 'translateY(-50%)' }} />
+            {logSearch && (
+              <button
+                type="button"
+                onClick={() => setLogSearch('')}
+                style={{
+                  position: 'absolute',
+                  right: '0.6rem',
+                  top: '50%',
+                  transform: 'translateY(-50%)',
+                  background: 'none',
+                  border: 'none',
+                  color: 'var(--text-muted)',
+                  cursor: 'pointer',
+                  padding: 0,
+                  display: 'flex',
+                  alignItems: 'center'
+                }}
+                title="Clear search"
+              >
+                <X size={12} />
+              </button>
             )}
           </div>
+
+          <div style={{ fontSize: '0.76rem', color: 'var(--text-muted)' }}>
+            Showing <strong>{filteredLogs.length}</strong> of {allLogs.length} logs
+            {logSearch && <span> matching "{logSearch}"</span>}
+          </div>
+        </div>
+
+        {/* Console / Terminal Stream Window */}
+        <div style={{
+          flex: 1,
+          background: '#040711',
+          border: '1px solid var(--border-color)',
+          borderRadius: 'var(--radius-md)',
+          padding: '1rem',
+          fontFamily: 'var(--font-mono)',
+          fontSize: '0.8rem',
+          overflowY: 'auto',
+          minHeight: 320,
+          maxHeight: 460,
+          display: 'flex',
+          flexDirection: 'column',
+          gap: '0.35rem',
+          boxShadow: 'inset 0 2px 10px rgba(0, 0, 0, 0.6)'
+        }}>
+          {filteredLogs.length === 0 ? (
+            <div style={{
+              color: 'var(--text-muted)',
+              textAlign: 'center',
+              padding: '3rem 1rem',
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              gap: '0.5rem'
+            }}>
+              <Terminal size={24} style={{ opacity: 0.3 }} />
+              <div>No log entries match your active filter.</div>
+              {allLogs.length === 0 && (
+                <div style={{ fontSize: '0.74rem', color: '#64748b' }}>
+                  Execute a sync job from the Sync Center to view live terminal streaming.
+                </div>
+              )}
+            </div>
+          ) : (
+            filteredLogs.map((l, i) => {
+              const isErr = l.level === 'error';
+              const isSucc = l.level === 'success';
+              return (
+                <div
+                  key={i}
+                  style={{
+                    color: isErr ? '#fca5a5' : (isSucc ? '#86efac' : '#cbd5e1'),
+                    lineHeight: 1.5,
+                    display: 'flex',
+                    alignItems: 'flex-start',
+                    gap: '0.5rem',
+                    wordBreak: 'break-word',
+                    overflowWrap: 'anywhere',
+                    fontFamily: 'Consolas, Monaco, "Courier New", monospace'
+                  }}
+                >
+                  <span style={{ color: '#475569', flexShrink: 0, userSelect: 'none', fontSize: '0.75rem' }}>
+                    [{formatLogDisplayTime(l.timestamp)}]
+                  </span>
+                  <span style={{
+                    fontSize: '0.68rem',
+                    fontWeight: 700,
+                    padding: '1px 5px',
+                    borderRadius: 3,
+                    flexShrink: 0,
+                    background: isErr ? 'rgba(239, 68, 68, 0.25)' : (isSucc ? 'rgba(52, 211, 153, 0.2)' : 'rgba(56, 189, 248, 0.15)'),
+                    color: isErr ? '#f87171' : (isSucc ? '#34d399' : '#38bdf8'),
+                    border: `1px solid ${isErr ? 'rgba(239, 68, 68, 0.4)' : (isSucc ? 'rgba(52, 211, 153, 0.3)' : 'rgba(56, 189, 248, 0.25)')}`,
+                    textTransform: 'uppercase',
+                    userSelect: 'none'
+                  }}>
+                    {l.level || 'info'}
+                  </span>
+                  <span style={{ flex: 1, minWidth: 0 }}>{l.message}</span>
+                </div>
+              );
+            })
+          )}
         </div>
       </div>
 
@@ -517,7 +808,7 @@ export default function SyncLogsTab({ sfStatus, onNavigateToConnection, onTrigge
         </div>
 
         <div style={{ overflowX: 'auto' }}>
-          <table className="data-table">
+          <table className="data-table" style={{ minWidth: 800 }}>
             <thead>
               <tr>
                 <th>ID</th>

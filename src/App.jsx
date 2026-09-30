@@ -154,7 +154,7 @@ function MainApp() {
         sfStatus={sfStatus}
       />
 
-      <main style={{ flex: 1, maxWidth: 1300, width: '100%', margin: '0 auto', padding: '1.5rem' }}>
+      <main className="app-main-container">
         {activeTab === 'explorer' && (
           <DataExplorer
             refreshSignal={dataRefreshKey}

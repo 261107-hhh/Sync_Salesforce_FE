@@ -121,7 +121,7 @@ export default function QuickAccountModal({ isOpen, onClose, onAccountCreated })
             />
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
+          <div className="form-grid-2">
             <div className="form-group">
               <label className="form-label">Industry</label>
               <select
@@ -157,7 +157,7 @@ export default function QuickAccountModal({ isOpen, onClose, onAccountCreated })
             </div>
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
+          <div className="form-grid-2">
             <div className="form-group">
               <label className="form-label">Phone</label>
               <input

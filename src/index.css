@@ -565,3 +565,904 @@ select option {
     transform: translateX(0);
   }
 }
+
+/* ==========================================================================
+   RESPONSIVE LAYOUT & CONTAINER ARCHITECTURE
+   ========================================================================== */
+
+.app-main-container {
+  flex: 1;
+  width: 100%;
+  max-width: 1680px;
+  margin: 0 auto;
+  padding: 1.5rem clamp(1rem, 2.5vw, 2.5rem);
+}
+
+.navbar-container {
+  width: 100%;
+  max-width: 1680px;
+  margin: 0 auto;
+  padding: 0.75rem clamp(1rem, 2.5vw, 2.5rem);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.navbar-brand-section {
+  display: flex;
+  align-items: center;
+  gap: 1.25rem;
+  flex-shrink: 0;
+}
+
+.navbar-nav-section {
+  display: flex;
+  gap: 0.4rem;
+  align-items: center;
+}
+
+.navbar-actions-section {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  flex-shrink: 0;
+}
+
+/* Hamburger Toggle Button */
+.navbar-hamburger-btn {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: var(--radius-md);
+  background: var(--btn-secondary-bg);
+  border: 1px solid var(--border-color);
+  color: var(--text-primary);
+  cursor: pointer;
+  transition: all 0.15s ease;
+  padding: 0;
+}
+
+.navbar-hamburger-btn:hover {
+  background: var(--oodles-light);
+  color: var(--oodles-primary);
+  border-color: var(--oodles-primary);
+}
+
+/* Mobile Drawer Overlay & Panel (Highest z-index so it is always on top) */
+.mobile-drawer-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.65);
+  backdrop-filter: blur(4px);
+  z-index: 99998 !important;
+  animation: fadeIn 0.2s ease-out;
+}
+
+.mobile-drawer-panel {
+  position: fixed;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: 86vw;
+  max-width: 340px;
+  background: var(--modal-bg);
+  border-left: 1px solid var(--border-color);
+  box-shadow: -10px 0 35px rgba(0, 0, 0, 0.45);
+  z-index: 99999 !important;
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  animation: slideDrawer 0.22s ease-out;
+}
+
+@keyframes slideDrawer {
+  from { transform: translateX(100%); }
+  to { transform: translateX(0); }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.mobile-drawer-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1rem 1.25rem;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.mobile-drawer-user-card {
+  padding: 1rem 1.25rem;
+  background: var(--oodles-light);
+  border-bottom: 1px solid var(--border-color);
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+}
+
+.mobile-drawer-avatar {
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--oodles-primary), var(--accent-purple));
+  color: #fff;
+  font-weight: 800;
+  font-size: 1.1rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  box-shadow: 0 4px 12px rgba(47, 131, 197, 0.3);
+}
+
+.mobile-drawer-sf-status {
+  margin: 0.85rem 1.25rem 0.25rem;
+  padding: 0.55rem 0.85rem;
+  border-radius: var(--radius-md);
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  cursor: pointer;
+  background: var(--table-header-bg);
+  border: 1px solid var(--border-color);
+  transition: all 0.15s ease;
+}
+
+.mobile-drawer-nav-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  padding: 0.85rem 1.25rem;
+  flex: 1;
+}
+
+.mobile-drawer-nav-item {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.7rem 0.95rem;
+  border-radius: var(--radius-md);
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  text-align: left;
+  transition: all 0.15s ease;
+  width: 100%;
+}
+
+.mobile-drawer-nav-item:hover {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+}
+
+.mobile-drawer-nav-item.active {
+  background: var(--oodles-light);
+  color: var(--oodles-primary);
+  border-color: var(--border-color);
+}
+
+.mobile-drawer-footer {
+  padding: 1rem 1.25rem;
+  border-top: 1px solid var(--border-color);
+  background: var(--modal-footer-bg);
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+}
+
+/* Full-Width Record Details Modal */
+.record-detail-modal-content {
+  width: 96vw !important;
+  max-width: 1680px !important;
+  height: 92vh !important;
+  max-height: 94vh !important;
+  display: flex;
+  flex-direction: column;
+}
+
+.modal-content-lg {
+  width: 95vw !important;
+  max-width: 1280px !important;
+  max-height: 90vh !important;
+}
+
+/* Responsive Grids */
+.sync-center-grid,
+.sync-logs-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr);
+  gap: 1.5rem;
+  align-items: start;
+  width: 100%;
+  min-width: 0;
+}
+
+.sync-center-grid > *,
+.sync-logs-grid > * {
+  min-width: 0;
+  max-width: 100%;
+}
+
+.table-responsive-container {
+  width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.form-grid-3 {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 0.75rem;
+}
+
+.form-grid-2 {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 0.75rem;
+}
+
+.audit-cards-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 0.75rem;
+}
+
+.field-cards-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  gap: 0.65rem;
+}
+
+/* Account & Workspaces Sub-Tabs Container (Ultra Compact & Slim) */
+.account-subtabs-wrapper.card {
+  position: relative;
+  z-index: 20;
+  transform: none !important;
+  padding: 0.35rem 0.5rem !important;
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+  transition: all 0.2s ease;
+  min-height: auto !important;
+}
+
+.account-subtabs-container {
+  width: 100%;
+}
+
+/* Desktop Subtabs: Visible on > 900px */
+.account-subtabs-desktop-tabs {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 0.4rem;
+  width: 100%;
+}
+
+.account-subtab-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.45rem 0.75rem;
+  height: 36px;
+  border-radius: var(--radius-md);
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--text-secondary);
+  font-weight: 500;
+  font-size: 0.83rem;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+}
+
+.account-subtab-btn:hover {
+  color: var(--text-primary);
+  background: var(--oodles-light);
+}
+
+.account-subtab-btn.active {
+  background: var(--oodles-primary);
+  color: #ffffff;
+  font-weight: 600;
+  box-shadow: 0 1px 4px rgba(47, 131, 197, 0.25);
+}
+
+/* Mobile Dropdown Subtabs: Hidden on desktop > 900px */
+.account-subtabs-mobile-dropdown {
+  display: none;
+  width: 100%;
+}
+
+.account-subtabs-custom-dropdown {
+  position: relative;
+  width: 100%;
+}
+
+.account-subtabs-dropdown-trigger {
+  width: 100%;
+  height: 38px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  padding: 0 0.85rem;
+  background: var(--bg-input);
+  border: 1.5px solid var(--oodles-primary);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: all 0.15s ease;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.account-subtabs-dropdown-trigger:hover {
+  background: var(--bg-hover);
+}
+
+.account-subtabs-dropdown-trigger:focus {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(47, 131, 197, 0.25);
+}
+
+.account-subtabs-dropdown-menu {
+  position: absolute;
+  top: calc(100% + 5px);
+  left: 0;
+  right: 0;
+  width: 100%;
+  box-sizing: border-box;
+  background: var(--modal-bg);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.35);
+  padding: 0.3rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  z-index: 1050;
+  animation: fadeIn 0.15s ease-out;
+}
+
+.account-subtabs-dropdown-item {
+  width: 100%;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  padding: 0.5rem 0.75rem;
+  border-radius: var(--radius-sm);
+  border: none;
+  background: transparent;
+  color: var(--text-secondary);
+  font-size: 0.86rem;
+  cursor: pointer;
+  transition: all 0.12s ease;
+  text-align: left;
+}
+
+.account-subtabs-dropdown-item:hover {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+}
+
+.account-subtabs-dropdown-item.selected {
+  background: var(--oodles-light);
+  color: var(--oodles-primary);
+  font-weight: 600;
+}
+
+/* Workspaces & Organizations Fluid Responsive Grid */
+.workspace-cards-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 320px), 1fr));
+  gap: clamp(0.85rem, 2vw, 1.25rem);
+  width: 100%;
+  align-items: stretch;
+}
+
+.workspace-card-item {
+  background: var(--table-row-hover);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  padding: clamp(1rem, 2vw, 1.35rem);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 1rem;
+  transition: all 0.15s ease;
+  min-width: 0;
+  height: 100%;
+  box-sizing: border-box;
+}
+
+.workspace-card-item.selected {
+  background: var(--oodles-light);
+  border-color: var(--oodles-primary);
+  box-shadow: 0 4px 20px rgba(47, 131, 197, 0.15);
+}
+
+.workspace-card-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.65rem;
+  padding-top: 0.85rem;
+  border-top: 1px solid var(--border-subtle);
+  margin-top: auto;
+  width: 100%;
+}
+
+.workspace-action-left,
+.workspace-action-right {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+/* Data Explorer Header Card (Compact & Slim) */
+.data-explorer-header-card {
+  padding: 0.65rem 1rem !important;
+  min-height: auto !important;
+  transition: all 0.2s ease;
+}
+
+/* Data Explorer Object Selector (Desktop tabs vs Mobile dropdown) */
+.data-explorer-desktop-tabs {
+  display: flex;
+}
+
+.data-explorer-mobile-dropdown {
+  display: none;
+  width: 100%;
+}
+
+.data-explorer-custom-dropdown {
+  position: relative;
+  width: 100%;
+}
+
+.data-explorer-dropdown-trigger {
+  width: 100%;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  padding: 0 0.85rem;
+  background: var(--bg-input);
+  border: 1.5px solid var(--oodles-primary);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: all 0.15s ease;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.data-explorer-dropdown-trigger:hover {
+  background: var(--bg-hover);
+}
+
+.data-explorer-dropdown-trigger:focus {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(47, 131, 197, 0.25);
+}
+
+.data-explorer-dropdown-menu {
+  position: absolute;
+  top: calc(100% + 5px);
+  left: 0;
+  right: 0;
+  width: 100%;
+  box-sizing: border-box;
+  background: var(--modal-bg);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.45);
+  padding: 0.3rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  z-index: 1050;
+  animation: fadeIn 0.15s ease-out;
+}
+
+.data-explorer-dropdown-item {
+  width: 100%;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  padding: 0.5rem 0.75rem;
+  border-radius: var(--radius-sm);
+  border: none;
+  background: transparent;
+  color: var(--text-secondary);
+  font-size: 0.86rem;
+  cursor: pointer;
+  transition: all 0.12s ease;
+  text-align: left;
+}
+
+.data-explorer-dropdown-item:hover {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+}
+
+.data-explorer-dropdown-item.selected {
+  background: var(--oodles-light);
+  color: var(--oodles-primary);
+  font-weight: 600;
+}
+
+/* ==========================================================================
+   MEDIA QUERIES FOR COMPREHENSIVE RESPONSIVENESS
+   ========================================================================== */
+
+/* Laptops & Tablets (<= 1200px): Stack Sync Center into 1 clean full-width column */
+@media (max-width: 1200px) {
+  .sync-center-grid,
+  .sync-logs-grid {
+    grid-template-columns: 1fr !important;
+    gap: 1.25rem;
+  }
+}
+
+/* Mobile & Tablet Breakpoint for Navbar & Subtabs (<= 1024px) */
+@media (max-width: 1024px) {
+  .navbar-nav-section {
+    display: none !important;
+  }
+  .desktop-only-user-btn {
+    display: none !important;
+  }
+  .desktop-only-logout-btn {
+    display: none !important;
+  }
+  .desktop-only-workspace-badge {
+    display: none !important;
+  }
+  .desktop-only-sf-status {
+    display: none !important;
+  }
+  .desktop-only-theme-toggle {
+    display: none !important;
+  }
+  .workspace-cards-grid {
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 1fr));
+    gap: 1rem;
+  }
+  .navbar-hamburger-btn {
+    display: flex !important;
+  }
+  .navbar-container {
+    gap: 0.75rem;
+    justify-content: space-between !important;
+  }
+}
+
+/* Tablets (<= 900px): Data Explorer Dropdown & Subtabs Dropdown */
+@media (max-width: 900px) {
+  .data-explorer-desktop-tabs {
+    display: none !important;
+  }
+  .data-explorer-mobile-dropdown {
+    display: flex !important;
+    width: 100%;
+  }
+  .account-subtabs-desktop-tabs {
+    display: none !important;
+  }
+  .account-subtabs-mobile-dropdown {
+    display: flex !important;
+  }
+}
+
+/* Tablets (<= 768px) */
+@media (max-width: 768px) {
+  .account-subtabs-wrapper.card {
+    padding: 0.35rem 0.5rem !important;
+  }
+
+  .data-explorer-header-card {
+    padding: 0.5rem 0.75rem !important;
+  }
+
+  .account-subtabs-mobile-dropdown {
+    display: flex !important;
+    width: 100%;
+  }
+
+  .workspace-cards-grid {
+    grid-template-columns: 1fr !important;
+    gap: 0.85rem;
+  }
+
+  .workspace-card-item {
+    padding: 1rem !important;
+  }
+
+  .app-main-container {
+    padding: 1rem 0.75rem;
+  }
+
+  .navbar-container {
+    padding: 0.65rem 1rem;
+  }
+
+  .record-detail-modal-content {
+    width: 100vw !important;
+    max-width: 100vw !important;
+    height: 100vh !important;
+    max-height: 100vh !important;
+    border-radius: 0 !important;
+    margin: 0 !important;
+  }
+
+  .modal-content-lg {
+    width: 100vw !important;
+    max-width: 100vw !important;
+    height: 100vh !important;
+    max-height: 100vh !important;
+    border-radius: 0 !important;
+  }
+
+  .modal-overlay {
+    padding: 0;
+  }
+
+  .modal-header {
+    padding: 1rem;
+  }
+
+  .modal-body {
+    padding: 1rem;
+  }
+
+  .modal-footer {
+    padding: 0.85rem 1rem;
+    flex-wrap: wrap;
+  }
+
+  .card {
+    padding: 1rem;
+  }
+
+  .field-cards-grid {
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  }
+}
+
+/* Mobile Devices (<= 480px) */
+@media (max-width: 480px) {
+  .field-cards-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .audit-cards-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .form-grid-3,
+  .form-grid-2 {
+    grid-template-columns: 1fr;
+  }
+
+  .btn {
+    font-size: 0.82rem;
+  }
+
+  .workspace-card-actions {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.5rem;
+  }
+
+  .workspace-action-left,
+  .workspace-action-right {
+    width: 100%;
+  }
+
+  .workspace-action-left .btn,
+  .workspace-action-right .btn {
+    width: 100%;
+    justify-content: center;
+    padding: 0.45rem 0.75rem;
+  }
+
+  .workspace-action-left span,
+  .workspace-action-right span {
+    width: 100%;
+    justify-content: center;
+  }
+}
+
+/* ==========================================================================
+   DATA EXPLORER RESPONSIVE HEADER & FILTER STYLES
+   ========================================================================== */
+.data-explorer-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.85rem;
+}
+
+.data-explorer-tabs-container {
+  display: flex;
+  gap: 0.35rem;
+  background: var(--bg-input);
+  padding: 0.3rem;
+  border-radius: var(--radius-md);
+  overflow-x: auto;
+  max-width: 100%;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  -webkit-overflow-scrolling: touch;
+}
+
+.data-explorer-tabs-container::-webkit-scrollbar {
+  display: none;
+}
+
+.data-explorer-tab-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.35rem 0.75rem;
+  height: 34px;
+  border-radius: var(--radius-sm);
+  border: none;
+  background: transparent;
+  color: var(--text-secondary);
+  font-weight: 500;
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+}
+
+.data-explorer-tab-btn:hover {
+  color: var(--text-primary);
+  background: var(--oodles-light);
+}
+
+.data-explorer-tab-btn.active {
+  background: var(--oodles-primary);
+  color: #ffffff;
+  font-weight: 600;
+  box-shadow: 0 1px 4px rgba(47, 131, 197, 0.25);
+}
+
+.data-explorer-tab-badge {
+  font-size: 0.72rem;
+  opacity: 0.9;
+  background: rgba(255, 255, 255, 0.22);
+  padding: 1px 6px;
+  border-radius: 9999px;
+  font-weight: 600;
+}
+
+.data-explorer-tab-btn:not(.active) .data-explorer-tab-badge {
+  background: var(--oodles-light);
+  color: var(--text-secondary);
+  border: 1px solid var(--border-subtle);
+}
+
+.data-explorer-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+  flex: 1 1 auto;
+  justify-content: flex-end;
+}
+
+.data-explorer-search-wrapper {
+  position: relative;
+  flex: 1 1 180px;
+  max-width: 260px;
+  min-width: 130px;
+}
+
+/* Filter Chip */
+.filter-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.22rem 0.6rem;
+  border-radius: 9999px;
+  background: var(--oodles-light);
+  border: 1px solid var(--border-color);
+  color: var(--text-primary);
+  font-size: 0.76rem;
+  font-weight: 500;
+  box-shadow: var(--shadow-sm);
+}
+
+.filter-chip button {
+  background: none;
+  border: none;
+  padding: 0;
+  color: var(--text-muted);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  transition: color 0.15s ease;
+}
+
+.filter-chip button:hover {
+  color: #f87171;
+}
+
+@media (max-width: 900px) {
+  .data-explorer-header {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.75rem;
+  }
+  .data-explorer-tabs-container {
+    width: 100%;
+    justify-content: flex-start;
+  }
+  .data-explorer-actions {
+    width: 100%;
+    justify-content: space-between;
+  }
+  .data-explorer-search-wrapper {
+    flex: 1 1 140px;
+    max-width: 100%;
+  }
+}
+
+@media (max-width: 520px) {
+  .data-explorer-actions {
+    gap: 0.4rem;
+  }
+  .data-explorer-actions .btn {
+    padding: 0.35rem 0.6rem;
+    font-size: 0.78rem;
+  }
+}
+
+/* ==========================================================================
+   SYNC LOGS RESPONSIVE STYLES
+   ========================================================================== */
+
+.sync-logs-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+@media (max-width: 680px) {
+  .sync-logs-header-actions {
+    width: 100%;
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.5rem;
+  }
+  .sync-logs-header-actions .btn {
+    justify-content: center;
+    font-size: 0.75rem;
+    padding: 0.4rem 0.5rem;
+  }
+}
+
+@media (max-width: 420px) {
+  .sync-logs-header-actions {
+    grid-template-columns: 1fr;
+  }
+}
+

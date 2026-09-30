@@ -251,9 +251,9 @@ export default function RecordDetailModal({
 
   return (
     <div className="modal-overlay" onClick={onClose}>
-      <div className="modal-content" onClick={(e) => e.stopPropagation()} style={{ maxWidth: 920 }}>
+      <div className="modal-content record-detail-modal-content" onClick={(e) => e.stopPropagation()}>
         {/* Header */}
-        <div className="modal-header">
+        <div className="modal-header" style={{ flexWrap: 'wrap', gap: '0.75rem' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
             <div>
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
@@ -323,7 +323,7 @@ export default function RecordDetailModal({
         </div>
 
         {/* Modal Navigation Tabs */}
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0.5rem 1.5rem 0', background: 'rgba(0, 0, 0, 0.2)', borderBottom: '1px solid var(--border-color)' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0.5rem 1.5rem 0', background: 'rgba(0, 0, 0, 0.2)', borderBottom: '1px solid var(--border-color)', flexWrap: 'wrap', gap: '0.5rem' }}>
           <div style={{ display: 'flex', gap: '0.5rem' }}>
             <button
               type="button"
@@ -435,7 +435,7 @@ export default function RecordDetailModal({
         </div>
 
         {/* Modal Body */}
-        <div className="modal-body" style={{ minHeight: 380, maxHeight: 'calc(80vh - 140px)', overflowY: 'auto' }}>
+        <div className="modal-body" style={{ flex: 1, minHeight: 380, overflowY: 'auto' }}>
           {loading ? (
             <div style={{ textAlign: 'center', padding: '3rem', color: 'var(--text-muted)' }}>
               Loading record details...
@@ -475,10 +475,7 @@ export default function RecordDetailModal({
               ) : null}
 
               {/* AUDIT & OWNERSHIP CARDS (Created By, Modified By, Synced By) */}
-              <div style={{
-                display: 'grid',
-                gridTemplateColumns: 'repeat(3, 1fr)',
-                gap: '0.75rem',
+              <div className="audit-cards-grid" style={{
                 background: 'var(--bg-secondary)',
                 border: '1px solid var(--border-color)',
                 borderRadius: 'var(--radius-md)',
@@ -538,7 +535,7 @@ export default function RecordDetailModal({
                     <h4 style={{ fontSize: '0.82rem', fontWeight: 700, color: 'var(--text-secondary)', textTransform: 'uppercase', marginBottom: '0.75rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
                       <Briefcase size={14} color="#38bdf8" /> General Information
                     </h4>
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: '0.65rem' }}>
+                    <div className="field-cards-grid">
                       {renderField('Full Name', 'Name')}
                       {renderField('Salutation', 'Salutation')}
                       {renderField('First Name', 'FirstName')}
@@ -558,7 +555,7 @@ export default function RecordDetailModal({
                     <h4 style={{ fontSize: '0.82rem', fontWeight: 700, color: 'var(--text-secondary)', textTransform: 'uppercase', marginBottom: '0.75rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
                       <Phone size={14} color="#34d399" /> Contact & Phone Details
                     </h4>
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: '0.65rem' }}>
+                    <div className="field-cards-grid">
                       {renderField('Email Address', 'Email')}
                       {renderField('Phone', 'Phone')}
                       {renderField('Mobile Phone', 'MobilePhone')}
@@ -578,7 +575,7 @@ export default function RecordDetailModal({
                       </h4>
                       <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>Primary Contact Postal Address</span>
                     </div>
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: '0.65rem' }}>
+                    <div className="field-cards-grid">
                       {renderField('Mailing Street', 'MailingStreet')}
                       {renderField('Mailing City', 'MailingCity')}
                       {renderField('Mailing State / Province', 'MailingState')}
@@ -595,7 +592,7 @@ export default function RecordDetailModal({
                       </h4>
                       <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>Secondary / Branch Location</span>
                     </div>
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: '0.65rem' }}>
+                    <div className="field-cards-grid">
                       {renderField('Other Street', 'OtherStreet')}
                       {renderField('Other City', 'OtherCity')}
                       {renderField('Other State / Province', 'OtherState')}
@@ -622,7 +619,7 @@ export default function RecordDetailModal({
                     <h4 style={{ fontSize: '0.82rem', fontWeight: 700, color: 'var(--text-secondary)', textTransform: 'uppercase', marginBottom: '0.75rem' }}>
                       Account Overview
                     </h4>
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: '0.65rem' }}>
+                    <div className="field-cards-grid">
                       {renderField('Account Name', 'Name')}
                       {renderField('Type', 'Type')}
                       {renderField('Industry', 'Industry')}
@@ -644,7 +641,7 @@ export default function RecordDetailModal({
                       </h4>
                       <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>Financial Invoicing Location</span>
                     </div>
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: '0.65rem' }}>
+                    <div className="field-cards-grid">
                       {renderField('Billing Street', 'BillingStreet')}
                       {renderField('Billing City', 'BillingCity')}
                       {renderField('Billing State / Province', 'BillingState')}
@@ -661,7 +658,7 @@ export default function RecordDetailModal({
                       </h4>
                       <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>Warehouse / Delivery Location</span>
                     </div>
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: '0.65rem' }}>
+                    <div className="field-cards-grid">
                       {renderField('Shipping Street', 'ShippingStreet')}
                       {renderField('Shipping City', 'ShippingCity')}
                       {renderField('Shipping State / Province', 'ShippingState')}
@@ -687,7 +684,7 @@ export default function RecordDetailModal({
                     <h4 style={{ fontSize: '0.82rem', fontWeight: 700, color: 'var(--text-secondary)', textTransform: 'uppercase', marginBottom: '0.75rem' }}>
                       Opportunity Overview
                     </h4>
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: '0.65rem' }}>
+                    <div className="field-cards-grid">
                       {renderField('Opportunity Name', 'Name')}
                       {renderField('Stage', 'StageName')}
                       {renderField('Amount', 'Amount', rec.Amount || rec.amount ? `$${Number(rec.Amount || rec.amount).toLocaleString()}` : null)}
@@ -719,7 +716,7 @@ export default function RecordDetailModal({
                     <h4 style={{ fontSize: '0.82rem', fontWeight: 700, color: 'var(--text-secondary)', textTransform: 'uppercase', marginBottom: '0.75rem' }}>
                       Lead Information
                     </h4>
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: '0.65rem' }}>
+                    <div className="field-cards-grid">
                       {renderField('Full Name', 'Name')}
                       {renderField('Salutation', 'Salutation')}
                       {renderField('First Name', 'FirstName')}
@@ -739,7 +736,7 @@ export default function RecordDetailModal({
                     <h4 style={{ fontSize: '0.82rem', fontWeight: 700, color: 'var(--text-secondary)', textTransform: 'uppercase', marginBottom: '0.75rem' }}>
                       Communication
                     </h4>
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: '0.65rem' }}>
+                    <div className="field-cards-grid">
                       {renderField('Email', 'Email')}
                       {renderField('Phone', 'Phone')}
                       {renderField('Mobile Phone', 'MobilePhone')}
@@ -755,7 +752,7 @@ export default function RecordDetailModal({
                       </h4>
                       <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>Lead Territory Location</span>
                     </div>
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: '0.65rem' }}>
+                    <div className="field-cards-grid">
                       {renderField('Street', 'Street')}
                       {renderField('City', 'City')}
                       {renderField('State / Province', 'State')}
@@ -784,7 +781,7 @@ export default function RecordDetailModal({
                       Complete schema transparency
                     </span>
                   </div>
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: '0.65rem' }}>
+                  <div className="field-cards-grid">
                     {remainingKeys.map((k) => renderField(k, k))}
                   </div>
                 </div>
@@ -814,47 +811,49 @@ export default function RecordDetailModal({
                     {(!relatedData?.contacts || relatedData.contacts.length === 0) ? (
                       <div style={{ padding: '1.25rem', textAlign: 'center', color: 'var(--text-muted)', fontSize: '0.82rem' }}>No contacts linked to this account.</div>
                     ) : (
-                      <table className="data-table">
-                        <thead>
-                          <tr>
-                            <th>Contact Name</th>
-                            <th>Title</th>
-                            <th>Email</th>
-                            <th>Phone</th>
-                            <th style={{ textAlign: 'right' }}>Action</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {relatedData.contacts.map((c) => (
-                            <tr
-                              key={c.id}
-                              style={{ cursor: onOpenRecordDetails ? 'pointer' : 'default' }}
-                              onClick={() => onOpenRecordDetails && onOpenRecordDetails('Contact', c.id)}
-                            >
-                              <td>
-                                <strong style={{ color: '#38bdf8', textDecoration: 'underline' }}>{c.name}</strong>
-                              </td>
-                              <td>{c.title || '-'}</td>
-                              <td>{c.email || '-'}</td>
-                              <td>{c.phone || '-'}</td>
-                              <td style={{ textAlign: 'right' }}>
-                                <button
-                                  type="button"
-                                  className="btn btn-secondary btn-sm"
-                                  style={{ padding: '0.2rem 0.55rem', fontSize: '0.72rem' }}
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    if (onOpenRecordDetails) onOpenRecordDetails('Contact', c.id);
-                                  }}
-                                  title="View Contact Details"
-                                >
-                                  View Contact →
-                                </button>
-                              </td>
+                      <div className="table-responsive-container">
+                        <table className="data-table">
+                          <thead>
+                            <tr>
+                              <th>Contact Name</th>
+                              <th>Title</th>
+                              <th>Email</th>
+                              <th>Phone</th>
+                              <th style={{ textAlign: 'right' }}>Action</th>
                             </tr>
-                          ))}
-                        </tbody>
-                      </table>
+                          </thead>
+                          <tbody>
+                            {relatedData.contacts.map((c) => (
+                              <tr
+                                key={c.id}
+                                style={{ cursor: onOpenRecordDetails ? 'pointer' : 'default' }}
+                                onClick={() => onOpenRecordDetails && onOpenRecordDetails('Contact', c.id)}
+                              >
+                                <td>
+                                  <strong style={{ color: '#38bdf8', textDecoration: 'underline' }}>{c.name}</strong>
+                                </td>
+                                <td>{c.title || '-'}</td>
+                                <td>{c.email || '-'}</td>
+                                <td>{c.phone || '-'}</td>
+                                <td style={{ textAlign: 'right' }}>
+                                  <button
+                                    type="button"
+                                    className="btn btn-secondary btn-sm"
+                                    style={{ padding: '0.2rem 0.55rem', fontSize: '0.72rem' }}
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      if (onOpenRecordDetails) onOpenRecordDetails('Contact', c.id);
+                                    }}
+                                    title="View Contact Details"
+                                  >
+                                    View Contact →
+                                  </button>
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
                     )}
                   </div>
 
@@ -876,47 +875,49 @@ export default function RecordDetailModal({
                     {(!relatedData?.opportunities || relatedData.opportunities.length === 0) ? (
                       <div style={{ padding: '1.25rem', textAlign: 'center', color: 'var(--text-muted)', fontSize: '0.82rem' }}>No opportunities linked to this account.</div>
                     ) : (
-                      <table className="data-table">
-                        <thead>
-                          <tr>
-                            <th>Opportunity Deal</th>
-                            <th>Stage</th>
-                            <th>Amount</th>
-                            <th>Close Date</th>
-                            <th style={{ textAlign: 'right' }}>Action</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {relatedData.opportunities.map((o) => (
-                            <tr
-                              key={o.id}
-                              style={{ cursor: onOpenRecordDetails ? 'pointer' : 'default' }}
-                              onClick={() => onOpenRecordDetails && onOpenRecordDetails('Opportunity', o.id)}
-                            >
-                              <td>
-                                <strong style={{ color: '#c084fc', textDecoration: 'underline' }}>{o.name}</strong>
-                              </td>
-                              <td><span className="badge badge-info">{o.stageName}</span></td>
-                              <td style={{ color: '#34d399', fontWeight: 600 }}>{o.amount ? `$${Number(o.amount).toLocaleString()}` : '-'}</td>
-                              <td>{o.closeDate || '-'}</td>
-                              <td style={{ textAlign: 'right' }}>
-                                <button
-                                  type="button"
-                                  className="btn btn-secondary btn-sm"
-                                  style={{ padding: '0.2rem 0.55rem', fontSize: '0.72rem' }}
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    if (onOpenRecordDetails) onOpenRecordDetails('Opportunity', o.id);
-                                  }}
-                                  title="View Opportunity Details"
-                                >
-                                  View Deal →
-                                </button>
-                              </td>
+                      <div className="table-responsive-container">
+                        <table className="data-table">
+                          <thead>
+                            <tr>
+                              <th>Opportunity Deal</th>
+                              <th>Stage</th>
+                              <th>Amount</th>
+                              <th>Close Date</th>
+                              <th style={{ textAlign: 'right' }}>Action</th>
                             </tr>
-                          ))}
-                        </tbody>
-                      </table>
+                          </thead>
+                          <tbody>
+                            {relatedData.opportunities.map((o) => (
+                              <tr
+                                key={o.id}
+                                style={{ cursor: onOpenRecordDetails ? 'pointer' : 'default' }}
+                                onClick={() => onOpenRecordDetails && onOpenRecordDetails('Opportunity', o.id)}
+                              >
+                                <td>
+                                  <strong style={{ color: '#c084fc', textDecoration: 'underline' }}>{o.name}</strong>
+                                </td>
+                                <td><span className="badge badge-info">{o.stageName}</span></td>
+                                <td style={{ color: '#34d399', fontWeight: 600 }}>{o.amount ? `$${Number(o.amount).toLocaleString()}` : '-'}</td>
+                                <td>{o.closeDate || '-'}</td>
+                                <td style={{ textAlign: 'right' }}>
+                                  <button
+                                    type="button"
+                                    className="btn btn-secondary btn-sm"
+                                    style={{ padding: '0.2rem 0.55rem', fontSize: '0.72rem' }}
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      if (onOpenRecordDetails) onOpenRecordDetails('Opportunity', o.id);
+                                    }}
+                                    title="View Opportunity Details"
+                                  >
+                                    View Deal →
+                                  </button>
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
                     )}
                   </div>
                 </>

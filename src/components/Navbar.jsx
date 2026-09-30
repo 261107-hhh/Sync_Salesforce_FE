@@ -1,4 +1,5 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 import {
@@ -11,7 +12,9 @@ import {
   FileText,
   Star,
   Sun,
-  Moon
+  Moon,
+  Menu,
+  X
 } from 'lucide-react';
 import OodlesLogo from './OodlesLogo';
 
@@ -25,6 +28,19 @@ export default function Navbar({ activeTab, setActiveTab, sfStatus }) {
     activeOrgRole
   } = useAuth();
   const { isDark, toggleTheme } = useTheme();
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
+  // Prevent background scroll when mobile drawer is open
+  useEffect(() => {
+    if (mobileMenuOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, [mobileMenuOpen]);
 
   const isAdminOrHigher = activeOrgRole === 'ADMIN' || activeOrgRole === 'OWNER';
 
@@ -43,6 +59,11 @@ export default function Navbar({ activeTab, setActiveTab, sfStatus }) {
 
   const roleStyle = getRoleBadge(activeOrgRole);
 
+  const handleNavClick = (tab) => {
+    setActiveTab(tab);
+    setMobileMenuOpen(false);
+  };
+
   return (
     <header style={{
       background: 'var(--header-bg)',
@@ -50,22 +71,14 @@ export default function Navbar({ activeTab, setActiveTab, sfStatus }) {
       borderBottom: '1px solid var(--header-border)',
       position: 'sticky',
       top: 0,
-      zIndex: 100,
+      zIndex: mobileMenuOpen ? 99999 : 100,
       transition: 'background-color 0.2s ease, border-color 0.2s ease'
     }}>
-      <div style={{
-        maxWidth: 1300,
-        margin: '0 auto',
-        padding: '0.75rem 1.5rem',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        gap: '1rem'
-      }}>
-        {/* Left: Brand + Active Workspace Indicator */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '1.25rem' }}>
+      <div className="navbar-container">
+        {/* Left: Brand + Active Workspace Indicator (Desktop Only) */}
+        <div className="navbar-brand-section">
           <div
-            onClick={() => setActiveTab('explorer')}
+            onClick={() => handleNavClick('explorer')}
             style={{ display: 'flex', alignItems: 'center', gap: '0.85rem', cursor: 'pointer' }}
             title="Go to Data Explorer"
           >
@@ -80,9 +93,10 @@ export default function Navbar({ activeTab, setActiveTab, sfStatus }) {
             </div>
           </div>
 
-          {/* Active Workspace Link (opens user account workspaces view) */}
+          {/* Active Workspace Link (Hidden when hamburger is present) */}
           <div
-            onClick={() => setActiveTab('account')}
+            onClick={() => handleNavClick('account')}
+            className="desktop-only-workspace-badge"
             style={{
               display: 'flex',
               alignItems: 'center',
@@ -99,44 +113,45 @@ export default function Navbar({ activeTab, setActiveTab, sfStatus }) {
             title="Active workspace (Click to manage workspaces in Account)"
           >
             <Building2 size={14} color="var(--oodles-primary)" />
-            <span style={{ fontWeight: 600, color: 'var(--text-primary)', maxWidth: 150, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+            <span className="navbar-workspace-badge" style={{ fontWeight: 600, color: 'var(--text-primary)', maxWidth: 140, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
               {activeOrgName || activeOrgId || 'Default Organization'}
             </span>
           </div>
         </div>
 
-        {/* Center: Main Navigation Tabs */}
-        <nav style={{ display: 'flex', gap: '0.4rem' }}>
+        {/* Center: Desktop Main Navigation Tabs */}
+        <nav className="navbar-nav-section">
           <button
-            onClick={() => setActiveTab('explorer')}
+            onClick={() => handleNavClick('explorer')}
             className={`btn ${activeTab === 'explorer' ? 'btn-primary' : 'btn-secondary'} btn-sm`}
           >
             <Database size={14} />
-            Data Explorer
+            <span>Data Explorer</span>
           </button>
 
           <button
-            onClick={() => setActiveTab('sync')}
+            onClick={() => handleNavClick('sync')}
             className={`btn ${activeTab === 'sync' ? 'btn-primary' : 'btn-secondary'} btn-sm`}
           >
             <RefreshCw size={14} />
-            Sync Center
+            <span>Sync Center</span>
           </button>
 
           <button
-            onClick={() => setActiveTab('sync-logs')}
+            onClick={() => handleNavClick('sync-logs')}
             className={`btn ${activeTab === 'sync-logs' ? 'btn-primary' : 'btn-secondary'} btn-sm`}
           >
             <FileText size={14} />
-            Sync Logs
+            <span>Sync Logs</span>
           </button>
         </nav>
 
-        {/* Right: Salesforce Status, Theme Switcher, User Account Button & Logout */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
-          {/* Salesforce Status Badge */}
+        {/* Right: Salesforce Status, Theme Switcher, User Button, Logout & Hamburger Toggle */}
+        <div className="navbar-actions-section">
+          {/* Salesforce Status Badge (Hidden when hamburger is present) */}
           <div
-            onClick={() => setActiveTab('account')}
+            onClick={() => handleNavClick('account')}
+            className="desktop-only-sf-status"
             style={{
               display: 'flex',
               alignItems: 'center',
@@ -159,14 +174,14 @@ export default function Navbar({ activeTab, setActiveTab, sfStatus }) {
               backgroundColor: sfStatus?.connected ? '#00B27A' : '#EF4444',
               boxShadow: sfStatus?.connected ? '0 0 8px #00B27A' : 'none'
             }} />
-            {sfStatus?.connected ? (sfStatus.isMock ? 'Mock Sandbox' : 'SF Connected') : 'SF Disconnected'}
+            <span>{sfStatus?.connected ? (sfStatus.isMock ? 'Mock Sandbox' : 'SF Connected') : 'SF Disconnected'}</span>
           </div>
 
-          {/* Theme Toggle Button */}
+          {/* Theme Toggle Button (Hidden when hamburger is present) */}
           <button
             type="button"
             onClick={toggleTheme}
-            className="theme-toggle-btn"
+            className="theme-toggle-btn desktop-only-theme-toggle"
             title={isDark ? "Switch to Oodles Light Mode" : "Switch to Executive Dark Mode"}
             aria-label="Toggle color theme"
           >
@@ -177,12 +192,12 @@ export default function Navbar({ activeTab, setActiveTab, sfStatus }) {
             )}
           </button>
 
-          {/* User Account / Profile Button */}
+          {/* User Account Button (Desktop Only) */}
           {user && (
             <button
               type="button"
-              onClick={() => setActiveTab('account')}
-              className={`btn ${activeTab === 'account' ? 'btn-primary' : 'btn-secondary'} btn-sm`}
+              onClick={() => handleNavClick('account')}
+              className={`btn ${activeTab === 'account' ? 'btn-primary' : 'btn-secondary'} btn-sm desktop-only-user-btn`}
               style={{
                 display: 'flex',
                 alignItems: 'center',
@@ -209,11 +224,157 @@ export default function Navbar({ activeTab, setActiveTab, sfStatus }) {
             </button>
           )}
 
-          <button onClick={logout} className="btn btn-secondary btn-sm" title="Log out">
+          {/* Logout Button (Desktop Only) */}
+          <button onClick={logout} className="btn btn-secondary btn-sm desktop-only-logout-btn" title="Log out">
             <LogOut size={14} />
+          </button>
+
+          {/* Mobile/Tablet Hamburger Menu Button */}
+          <button
+            type="button"
+            className="navbar-hamburger-btn"
+            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+            aria-label={mobileMenuOpen ? "Close navigation menu" : "Open navigation menu"}
+            title={mobileMenuOpen ? "Close menu" : "Open menu"}
+          >
+            {mobileMenuOpen ? <X size={20} /> : <Menu size={20} />}
           </button>
         </div>
       </div>
+
+      {/* Mobile/Tablet Slide-Out Drawer Menu (Rendered via Portal to document.body so it always renders above <main>) */}
+      {mobileMenuOpen && typeof document !== 'undefined' && createPortal(
+        <>
+          <div className="mobile-drawer-backdrop" onClick={() => setMobileMenuOpen(false)} />
+          <div className="mobile-drawer-panel">
+            {/* Drawer Top Bar */}
+            <div className="mobile-drawer-header">
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
+                <OodlesLogo height={24} isDark={isDark} />
+                <span style={{ fontWeight: 700, fontSize: '0.9rem', color: 'var(--text-primary)' }}>SF Sync Menu</span>
+              </div>
+              <button
+                type="button"
+                onClick={() => setMobileMenuOpen(false)}
+                style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', padding: '0.2rem' }}
+                aria-label="Close menu"
+              >
+                <X size={20} />
+              </button>
+            </div>
+
+            {/* User Profile Card */}
+            {user && (
+              <div className="mobile-drawer-user-card">
+                <div className="mobile-drawer-avatar">
+                  {(user.name || user.email || 'U')[0].toUpperCase()}
+                </div>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ fontWeight: 700, fontSize: '0.92rem', color: 'var(--text-primary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                    {user.name}
+                  </div>
+                  <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                    {user.email}
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', marginTop: '0.25rem', flexWrap: 'wrap' }}>
+                    <span style={{
+                      fontSize: '0.64rem',
+                      fontWeight: 700,
+                      color: roleStyle.color,
+                      background: roleStyle.bg,
+                      border: `1px solid ${roleStyle.border}`,
+                      padding: '1px 5px',
+                      borderRadius: 4
+                    }}>
+                      {roleStyle.label}
+                    </span>
+                    <span style={{ fontSize: '0.72rem', color: 'var(--oodles-primary)', fontWeight: 600 }}>
+                      🏢 {activeOrgName || activeOrgId || 'Workspace'}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Salesforce Status in Drawer */}
+            <div
+              onClick={() => handleNavClick('account')}
+              className="mobile-drawer-sf-status"
+              title="Salesforce Connection Status"
+            >
+              <span style={{
+                width: 8,
+                height: 8,
+                borderRadius: '50%',
+                backgroundColor: sfStatus?.connected ? '#00B27A' : '#EF4444',
+                boxShadow: sfStatus?.connected ? '0 0 8px #00B27A' : 'none'
+              }} />
+              <span style={{ fontWeight: 600, fontSize: '0.78rem', color: sfStatus?.connected ? 'var(--badge-success-text)' : 'var(--accent-red)' }}>
+                {sfStatus?.connected ? (sfStatus.isMock ? 'Mock Sandbox Active' : 'Salesforce Connected') : 'Salesforce Disconnected'}
+              </span>
+            </div>
+
+            {/* Navigation List */}
+            <div className="mobile-drawer-nav-list">
+              <button
+                onClick={() => handleNavClick('explorer')}
+                className={`mobile-drawer-nav-item ${activeTab === 'explorer' ? 'active' : ''}`}
+              >
+                <Database size={18} />
+                <span>Data Explorer</span>
+              </button>
+
+              <button
+                onClick={() => handleNavClick('sync')}
+                className={`mobile-drawer-nav-item ${activeTab === 'sync' ? 'active' : ''}`}
+              >
+                <RefreshCw size={18} />
+                <span>Sync Center</span>
+              </button>
+
+              <button
+                onClick={() => handleNavClick('sync-logs')}
+                className={`mobile-drawer-nav-item ${activeTab === 'sync-logs' ? 'active' : ''}`}
+              >
+                <FileText size={18} />
+                <span>Sync Logs</span>
+              </button>
+
+              <button
+                onClick={() => handleNavClick('account')}
+                className={`mobile-drawer-nav-item ${activeTab === 'account' ? 'active' : ''}`}
+              >
+                <User size={18} />
+                <span>Account & Workspaces</span>
+              </button>
+            </div>
+
+            {/* Drawer Footer Actions */}
+            <div className="mobile-drawer-footer">
+              <button
+                type="button"
+                onClick={toggleTheme}
+                className="btn btn-secondary btn-sm"
+                style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem' }}
+              >
+                {isDark ? <Sun size={15} color="#FBBF24" /> : <Moon size={15} color="#2F83C5" />}
+                <span>{isDark ? 'Switch to Light Theme' : 'Switch to Dark Theme'}</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => { setMobileMenuOpen(false); logout(); }}
+                className="btn btn-secondary btn-sm"
+                style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', color: '#f87171' }}
+              >
+                <LogOut size={15} />
+                <span>Log Out</span>
+              </button>
+            </div>
+          </div>
+        </>,
+        document.body
+      )}
     </header>
   );
 }

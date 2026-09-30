@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import api from '../api/client';
 import TeamManagement from './TeamManagement';
@@ -22,7 +22,8 @@ import {
   ShieldCheck,
   Zap,
   Unlink,
-  Star
+  Star,
+  ChevronDown
 } from 'lucide-react';
 
 export default function UserAccountTab({
@@ -46,6 +47,32 @@ export default function UserAccountTab({
   const isAdminOrHigher = activeOrgRole === 'ADMIN' || activeOrgRole === 'OWNER';
 
   const [subTab, setSubTab] = useState(initialSubTab);
+  const [dropdownOpen, setDropdownOpen] = useState(false);
+  const dropdownRef = useRef(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setDropdownOpen(false);
+      }
+    };
+    if (dropdownOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [dropdownOpen]);
+
+  const subTabOptions = [
+    { id: 'workspaces', label: `Workspaces (${organizations.length})`, icon: Building2 },
+    { id: 'team', label: 'Team Management', icon: Users },
+    { id: 'salesforce', label: 'Connection & Setup', icon: LinkIcon },
+    { id: 'profile', label: 'Profile & Security', icon: User }
+  ];
+
+  const currentSubTab = subTabOptions.find((o) => o.id === subTab) || subTabOptions[0];
+  const CurrentIcon = currentSubTab.icon;
   const [switchingId, setSwitchingId] = useState(null);
   const [settingDefaultId, setSettingDefaultId] = useState(null);
   const [mockConnecting, setMockConnecting] = useState(false);
@@ -197,7 +224,7 @@ export default function UserAccountTab({
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '1.25rem' }}>
           
           {/* Left: Avatar + Details */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '1.25rem' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '1.25rem', flexWrap: 'wrap' }}>
             <div style={{
               width: 64,
               height: 64,
@@ -275,34 +302,34 @@ export default function UserAccountTab({
         {/* Quick Stats Grid */}
         <div style={{
           display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))',
           gap: '0.85rem',
           marginTop: '1.25rem',
           paddingTop: '1.25rem',
           borderTop: '1px solid var(--border-subtle)'
         }}>
-          <div style={{ background: 'var(--table-row-hover)', padding: '0.65rem 0.85rem', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-color)' }}>
+          <div style={{ background: 'var(--table-row-hover)', padding: '0.65rem 0.85rem', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-color)', minWidth: 0 }}>
             <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)', textTransform: 'uppercase' }}>Active Workspace</span>
             <div style={{ fontSize: '0.9rem', fontWeight: 600, color: 'var(--text-primary)', marginTop: '0.2rem', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
               {activeOrgName || activeOrgId || 'Default Organization'}
             </div>
           </div>
 
-          <div style={{ background: 'var(--table-row-hover)', padding: '0.65rem 0.85rem', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-color)' }}>
+          <div style={{ background: 'var(--table-row-hover)', padding: '0.65rem 0.85rem', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-color)', minWidth: 0 }}>
             <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)', textTransform: 'uppercase' }}>Salesforce Integration</span>
             <div style={{ fontSize: '0.9rem', fontWeight: 600, color: sfStatus?.connected ? '#34d399' : '#f87171', marginTop: '0.2rem' }}>
               {sfStatus?.connected ? (sfStatus.isMock ? 'Mock Sandbox' : 'SF Connected') : 'Disconnected'}
             </div>
           </div>
 
-          <div style={{ background: 'rgba(255, 255, 255, 0.02)', padding: '0.65rem 0.85rem', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-color)' }}>
+          <div style={{ background: 'rgba(255, 255, 255, 0.02)', padding: '0.65rem 0.85rem', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-color)', minWidth: 0 }}>
             <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)', textTransform: 'uppercase' }}>Your Workspace Role</span>
-            <div style={{ fontSize: '0.9rem', fontWeight: 600, color: roleStyle.color, marginTop: '0.2rem' }}>
+            <div style={{ fontSize: '0.9rem', fontWeight: 600, color: roleStyle.color, marginTop: '0.2rem', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
               {activeOrgRole} ({activeOrgRole === 'OWNER' || activeOrgRole === 'ADMIN' ? 'Full Control' : (activeOrgRole === 'MEMBER' ? 'Read / Write' : 'Read Only & Sync')})
             </div>
           </div>
 
-          <div style={{ background: 'rgba(255, 255, 255, 0.02)', padding: '0.65rem 0.85rem', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-color)' }}>
+          <div style={{ background: 'rgba(255, 255, 255, 0.02)', padding: '0.65rem 0.85rem', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-color)', minWidth: 0 }}>
             <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)', textTransform: 'uppercase' }}>Account Security</span>
             <div style={{ fontSize: '0.9rem', fontWeight: 600, color: '#38bdf8', marginTop: '0.2rem', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
               <ShieldCheck size={14} /> JWT Authenticated
@@ -311,103 +338,96 @@ export default function UserAccountTab({
         </div>
       </div>
 
-      {/* Sub-Navigation Tabs */}
-      <div style={{ display: 'flex', gap: '0.5rem', background: 'var(--bg-input)', padding: '0.35rem', borderRadius: 'var(--radius-md)' }}>
-        <button
-          type="button"
-          onClick={() => setSubTab('workspaces')}
-          style={{
-            flex: 1,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            gap: '0.5rem',
-            padding: '0.6rem 1rem',
-            borderRadius: 'var(--radius-sm)',
-            border: 'none',
-            background: subTab === 'workspaces' ? 'rgba(56, 189, 248, 0.15)' : 'transparent',
-            color: subTab === 'workspaces' ? '#38bdf8' : 'var(--text-secondary)',
-            fontWeight: subTab === 'workspaces' ? 600 : 500,
-            fontSize: '0.85rem',
-            cursor: 'pointer',
-            transition: 'all 0.15s ease'
-          }}
-        >
-          <Building2 size={15} />
-          <span>Workspaces ({organizations.length})</span>
-        </button>
+      {/* Sub-Navigation: Compact Container (Desktop Tabs + Small Width Dropdown) */}
+      <div
+        className="account-subtabs-wrapper card"
+        style={{ position: 'relative', zIndex: dropdownOpen ? 100 : 10 }}
+      >
+        <div className="account-subtabs-container">
+          
+          {/* Desktop Subtabs: Visible on > 900px */}
+          <div className="account-subtabs-desktop-tabs">
+            {subTabOptions.map((opt) => {
+              const TabIcon = opt.icon;
+              return (
+                <button
+                  key={opt.id}
+                  type="button"
+                  onClick={() => setSubTab(opt.id)}
+                  className={`account-subtab-btn ${subTab === opt.id ? 'active' : ''}`}
+                >
+                  <TabIcon size={15} />
+                  <span>{opt.label}</span>
+                </button>
+              );
+            })}
+          </div>
 
-        <button
-          type="button"
-          onClick={() => setSubTab('team')}
-          style={{
-            flex: 1,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            gap: '0.5rem',
-            padding: '0.6rem 1rem',
-            borderRadius: 'var(--radius-sm)',
-            border: 'none',
-            background: subTab === 'team' ? 'rgba(56, 189, 248, 0.15)' : 'transparent',
-            color: subTab === 'team' ? '#38bdf8' : 'var(--text-secondary)',
-            fontWeight: subTab === 'team' ? 600 : 500,
-            fontSize: '0.85rem',
-            cursor: 'pointer',
-            transition: 'all 0.15s ease'
-          }}
-        >
-          <Users size={15} />
-          <span>Team Management</span>
-        </button>
+          {/* Mobile / Small Width Dropdown: Visible on <= 900px */}
+          <div className="account-subtabs-mobile-dropdown" ref={dropdownRef}>
+            <div className="account-subtabs-custom-dropdown">
+              <button
+                type="button"
+                className="account-subtabs-dropdown-trigger"
+                onClick={() => setDropdownOpen(!dropdownOpen)}
+                aria-expanded={dropdownOpen}
+                aria-label="Select section"
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', minWidth: 0 }}>
+                  <CurrentIcon size={16} color="var(--oodles-primary)" style={{ flexShrink: 0 }} />
+                  <span style={{
+                    fontWeight: 600,
+                    fontSize: '0.88rem',
+                    color: 'var(--text-primary)',
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                    whiteSpace: 'nowrap'
+                  }}>
+                    {currentSubTab.label}
+                  </span>
+                </div>
+                <ChevronDown
+                  size={16}
+                  style={{
+                    color: 'var(--text-muted)',
+                    transform: dropdownOpen ? 'rotate(180deg)' : 'rotate(0deg)',
+                    transition: 'transform 0.2s ease',
+                    flexShrink: 0
+                  }}
+                />
+              </button>
 
-        <button
-          type="button"
-          onClick={() => setSubTab('salesforce')}
-          style={{
-            flex: 1,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            gap: '0.5rem',
-            padding: '0.6rem 1rem',
-            borderRadius: 'var(--radius-sm)',
-            border: 'none',
-            background: subTab === 'salesforce' ? 'rgba(56, 189, 248, 0.15)' : 'transparent',
-            color: subTab === 'salesforce' ? '#38bdf8' : 'var(--text-secondary)',
-            fontWeight: subTab === 'salesforce' ? 600 : 500,
-            fontSize: '0.85rem',
-            cursor: 'pointer',
-            transition: 'all 0.15s ease'
-          }}
-        >
-          <LinkIcon size={15} />
-          <span>SF Setup & Connection</span>
-        </button>
+              {dropdownOpen && (
+                <div className="account-subtabs-dropdown-menu">
+                  {subTabOptions.map((opt) => {
+                    const OptIcon = opt.icon;
+                    const isSelected = subTab === opt.id;
+                    return (
+                      <button
+                        key={opt.id}
+                        type="button"
+                        className={`account-subtabs-dropdown-item ${isSelected ? 'selected' : ''}`}
+                        onClick={() => {
+                          setSubTab(opt.id);
+                          setDropdownOpen(false);
+                        }}
+                      >
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
+                          <OptIcon size={15} color={isSelected ? 'var(--oodles-primary)' : 'var(--text-muted)'} />
+                          <span style={{ fontWeight: isSelected ? 700 : 500 }}>
+                            {opt.label}
+                          </span>
+                        </div>
+                        {isSelected && <Check size={14} color="var(--oodles-primary)" />}
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          </div>
 
-        <button
-          type="button"
-          onClick={() => setSubTab('profile')}
-          style={{
-            flex: 1,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            gap: '0.5rem',
-            padding: '0.6rem 1rem',
-            borderRadius: 'var(--radius-sm)',
-            border: 'none',
-            background: subTab === 'profile' ? 'rgba(56, 189, 248, 0.15)' : 'transparent',
-            color: subTab === 'profile' ? '#38bdf8' : 'var(--text-secondary)',
-            fontWeight: subTab === 'profile' ? 600 : 500,
-            fontSize: '0.85rem',
-            cursor: 'pointer',
-            transition: 'all 0.15s ease'
-          }}
-        >
-          <User size={15} />
-          <span>Profile & Security</span>
-        </button>
+        </div>
       </div>
 
       {/* SUB-TAB 1: WORKSPACES & ORGANIZATIONS */}
@@ -435,7 +455,7 @@ export default function UserAccountTab({
               )}
             </div>
 
-            <div style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '1rem', display: 'grid' }}>
+            <div className="workspace-cards-grid">
               {organizations.map((org) => {
                 const isSelected = org.id === activeOrgId;
                 const isDefault = org.id === defaultOrgId;
@@ -444,28 +464,48 @@ export default function UserAccountTab({
                 return (
                   <div
                     key={org.id}
-                    style={{
-                      background: isSelected ? 'var(--oodles-light)' : 'var(--table-row-hover)',
-                      border: `1px solid ${isSelected ? 'var(--oodles-primary)' : 'var(--border-color)'}`,
-                      borderRadius: 'var(--radius-md)',
-                      padding: '1.25rem',
-                      display: 'flex',
-                      flexDirection: 'column',
-                      justifyContent: 'space-between',
-                      gap: '1rem',
-                      transition: 'all 0.15s ease',
-                      boxShadow: isSelected ? '0 4px 20px rgba(47, 131, 197, 0.15)' : 'none'
-                    }}
+                    className={`workspace-card-item ${isSelected ? 'selected' : ''}`}
                   >
                     <div>
-                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.5rem', marginBottom: '0.5rem' }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                          <Building2 size={18} color={isSelected ? 'var(--oodles-primary)' : 'var(--text-muted)'} />
-                          <h4 style={{ fontSize: '1rem', fontWeight: 700, color: 'var(--text-primary)', margin: 0 }}>
-                            {org.name}
-                          </h4>
+                      {/* Top Row: Icon + Name & Org ID on Left, Badges on Right (No overlapping) */}
+                      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '0.75rem', marginBottom: '0.65rem' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', minWidth: 0, flex: 1 }}>
+                          <div style={{
+                            width: 36,
+                            height: 36,
+                            borderRadius: 'var(--radius-sm)',
+                            background: isSelected ? 'var(--oodles-light)' : 'var(--bg-card)',
+                            border: `1px solid ${isSelected ? 'var(--oodles-primary)' : 'var(--border-color)'}`,
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            flexShrink: 0
+                          }}>
+                            <Building2 size={18} color={isSelected ? 'var(--oodles-primary)' : 'var(--text-muted)'} />
+                          </div>
+                          <div style={{ minWidth: 0, flex: 1 }}>
+                            <h4
+                              style={{
+                                fontSize: '1rem',
+                                fontWeight: 700,
+                                color: 'var(--text-primary)',
+                                margin: 0,
+                                overflow: 'hidden',
+                                textOverflow: 'ellipsis',
+                                whiteSpace: 'nowrap'
+                              }}
+                              title={org.name}
+                            >
+                              {org.name}
+                            </h4>
+                            <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', marginTop: '2px' }}>
+                              Org #{org.id}
+                            </div>
+                          </div>
                         </div>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+
+                        {/* Status Badges on Right: Fixed shrink so they never get squashed */}
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', flexShrink: 0, flexWrap: 'wrap', justifyContent: 'flex-end' }}>
                           {isDefault && (
                             <span className="badge" style={{
                               fontSize: '0.68rem',
@@ -488,25 +528,27 @@ export default function UserAccountTab({
                         </div>
                       </div>
 
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap', marginTop: '0.4rem' }}>
+                      {/* Middle: Role and Salesforce Connection Badges */}
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap', margin: '0.55rem 0' }}>
                         <span style={{
-                          fontSize: '0.68rem',
+                          fontSize: '0.7rem',
                           fontWeight: 700,
                           color: orgRoleStyle.color,
                           background: orgRoleStyle.bg,
                           border: `1px solid ${orgRoleStyle.border}`,
-                          padding: '1px 6px',
+                          padding: '2px 7px',
                           borderRadius: 4
                         }}>
-                          Your Role: {org.role || 'MEMBER'}
+                          Role: {org.role || 'MEMBER'}
                         </span>
 
                         <span style={{
-                          fontSize: '0.68rem',
+                          fontSize: '0.7rem',
+                          fontWeight: 600,
                           color: org.salesforceConnected ? '#34d399' : '#f87171',
                           background: org.salesforceConnected ? 'rgba(52, 211, 153, 0.1)' : 'rgba(248, 113, 113, 0.1)',
                           border: `1px solid ${org.salesforceConnected ? 'rgba(52, 211, 153, 0.3)' : 'rgba(248, 113, 113, 0.3)'}`,
-                          padding: '1px 6px',
+                          padding: '2px 7px',
                           borderRadius: 4
                         }}>
                           {org.salesforceConnected ? 'SF Connected' : 'SF Offline'}
@@ -514,54 +556,84 @@ export default function UserAccountTab({
                       </div>
 
                       {org.sfInstanceUrl && (
-                        <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', fontFamily: 'var(--font-mono)', marginTop: '0.5rem', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                        <div
+                          style={{
+                            fontSize: '0.72rem',
+                            color: 'var(--text-muted)',
+                            fontFamily: 'var(--font-mono)',
+                            background: 'var(--bg-input)',
+                            padding: '0.35rem 0.6rem',
+                            borderRadius: 'var(--radius-sm)',
+                            border: '1px solid var(--border-subtle)',
+                            overflow: 'hidden',
+                            textOverflow: 'ellipsis',
+                            whiteSpace: 'nowrap',
+                            marginBottom: '0.5rem'
+                          }}
+                          title={org.sfInstanceUrl}
+                        >
                           {org.sfInstanceUrl}
                         </div>
                       )}
                     </div>
 
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '0.5rem', paddingTop: '0.75rem', borderTop: '1px solid var(--border-subtle)' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                        <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>
-                          Org ID: {org.id}
-                        </span>
-                        {!isDefault && (
+                    {/* Bottom Action Row: Space Between Left & Right with Responsive Actions */}
+                    <div className="workspace-card-actions">
+                      <div className="workspace-action-left">
+                        {!isDefault ? (
                           <button
                             type="button"
                             onClick={() => handleSetDefaultOrg(org.id)}
                             disabled={settingDefaultId === org.id}
                             className="btn btn-secondary btn-sm"
                             style={{
-                              fontSize: '0.7rem',
-                              padding: '0.15rem 0.5rem',
+                              fontSize: '0.72rem',
+                              padding: '0.3rem 0.6rem',
                               display: 'inline-flex',
                               alignItems: 'center',
-                              gap: '0.25rem',
+                              gap: '0.3rem',
                               color: '#fbbf24',
-                              borderColor: 'rgba(245, 158, 11, 0.3)'
+                              borderColor: 'rgba(245, 158, 11, 0.35)'
                             }}
                             title="Make this workspace default upon login"
                           >
-                            <Star size={11} />
+                            <Star size={12} />
                             {settingDefaultId === org.id ? 'Setting...' : 'Set as Default'}
+                          </button>
+                        ) : (
+                          <span style={{ fontSize: '0.72rem', color: '#fbbf24', display: 'inline-flex', alignItems: 'center', gap: '0.25rem', fontWeight: 600 }}>
+                            <Star size={11} fill="#fbbf24" /> Login Default
+                          </span>
+                        )}
+                      </div>
+
+                      <div className="workspace-action-right">
+                        {isSelected ? (
+                          <span style={{
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '0.35rem',
+                            color: '#38bdf8',
+                            fontSize: '0.82rem',
+                            fontWeight: 600,
+                            padding: '0.25rem 0.5rem',
+                            background: 'rgba(56, 189, 248, 0.1)',
+                            borderRadius: 4
+                          }}>
+                            <Check size={14} /> Currently Active
+                          </span>
+                        ) : (
+                          <button
+                            type="button"
+                            onClick={() => handleSelectOrg(org.id)}
+                            disabled={switchingId === org.id}
+                            className="btn btn-secondary btn-sm"
+                            style={{ fontSize: '0.78rem', padding: '0.3rem 0.75rem', fontWeight: 600 }}
+                          >
+                            {switchingId === org.id ? 'Switching...' : 'Switch Workspace'}
                           </button>
                         )}
                       </div>
-                      {isSelected ? (
-                        <span style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', color: '#38bdf8', fontSize: '0.8rem', fontWeight: 600 }}>
-                          <Check size={14} /> Currently Selected
-                        </span>
-                      ) : (
-                        <button
-                          type="button"
-                          onClick={() => handleSelectOrg(org.id)}
-                          disabled={switchingId === org.id}
-                          className="btn btn-secondary btn-sm"
-                          style={{ fontSize: '0.78rem', padding: '0.25rem 0.65rem' }}
-                        >
-                          {switchingId === org.id ? 'Switching...' : 'Switch to this Workspace'}
-                        </button>
-                      )}
                     </div>
                   </div>
                 );
@@ -591,7 +663,7 @@ export default function UserAccountTab({
 
       {/* SUB-TAB 4: PROFILE & SECURITY DETAILS */}
       {subTab === 'profile' && (
-        <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr', gap: '1.25rem' }}>
+        <div className="sync-logs-grid">
           {/* Identity & Account Data */}
           <div className="card">
             <h3 style={{ fontSize: '1.1rem', fontWeight: 700, color: 'var(--text-primary)', marginBottom: '1.25rem' }}>
@@ -599,7 +671,7 @@ export default function UserAccountTab({
             </h3>
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.85rem' }}>
+              <div className="form-grid-2">
                 <div className="form-group">
                   <label className="form-label">Full Name</label>
                   <input type="text" className="form-input" value={user?.name || ''} readOnly />
@@ -611,7 +683,7 @@ export default function UserAccountTab({
                 </div>
               </div>
 
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.85rem' }}>
+              <div className="form-grid-2">
                 <div className="form-group">
                   <label className="form-label">User ID</label>
                   <input type="text" className="form-input" value={`#USR-${user?.id || '0'}`} readOnly />
@@ -628,7 +700,7 @@ export default function UserAccountTab({
                 </div>
               </div>
 
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.85rem' }}>
+              <div className="form-grid-2">
                 <div className="form-group">
                   <label className="form-label">Active Workspace</label>
                   <input type="text" className="form-input" value={activeOrgName || activeOrgId || ''} readOnly />
