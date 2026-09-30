@@ -22,6 +22,7 @@ import {
   CheckCircle2,
   AlertTriangle
 } from 'lucide-react';
+import SyncedByBadge from './SyncedByBadge';
 
 // Static set of all standard keys defined outside component to avoid allocations on render
 const STATIC_RENDERED_KEYS = new Set([
@@ -522,10 +523,8 @@ export default function RecordDetailModal({
                   <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
                     <RefreshCw size={12} color="#34d399" /> Synced By
                   </div>
-                  <div style={{ fontSize: '0.85rem', fontWeight: 600, color: '#34d399', marginTop: '0.2rem' }}>
-                    {syncedBy || 'Direct Sync Pipeline'}
-                  </div>
-                  <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', marginTop: '0.1rem' }}>
+                  <SyncedByBadge syncedBy={syncedBy} variant="modal" />
+                  <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', marginTop: '0.25rem' }}>
                     Multi-Tenant Secure Sync
                   </div>
                 </div>

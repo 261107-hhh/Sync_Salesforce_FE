@@ -19,7 +19,8 @@ import {
   CheckCircle2,
   XCircle,
   ExternalLink,
-  Calendar
+  Calendar,
+  X
 } from 'lucide-react';
 
 const getTodayDateString = () => {
@@ -404,14 +405,26 @@ export default function SyncCenter({ sfStatus, onNavigateToConnection, onNavigat
                 <div>
                   <label className="form-label" style={{ fontSize: '0.78rem', marginBottom: '0.35rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                     <span>Sync To Date</span>
-                    <button
-                      type="button"
-                      onClick={() => setToDate(getTodayDateString())}
-                      style={{ background: 'none', border: 'none', color: '#38bdf8', fontSize: '0.7rem', cursor: 'pointer', padding: 0 }}
-                      title="Set to today"
-                    >
-                      Today
-                    </button>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                      {toDate && (
+                        <button
+                          type="button"
+                          onClick={() => setToDate('')}
+                          style={{ background: 'none', border: 'none', color: 'var(--text-muted)', fontSize: '0.7rem', cursor: 'pointer', padding: 0 }}
+                          title="Clear to date constraint"
+                        >
+                          Clear
+                        </button>
+                      )}
+                      <button
+                        type="button"
+                        onClick={() => setToDate(getTodayDateString())}
+                        style={{ background: 'none', border: 'none', color: '#38bdf8', fontSize: '0.7rem', cursor: 'pointer', padding: 0 }}
+                        title="Set to today"
+                      >
+                        Today
+                      </button>
+                    </div>
                   </label>
                   <input
                     type="date"
@@ -422,7 +435,7 @@ export default function SyncCenter({ sfStatus, onNavigateToConnection, onNavigat
                     style={{ fontSize: '0.82rem', padding: '0.45rem 0.65rem' }}
                   />
                   <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', marginTop: '0.3rem' }}>
-                    {toDate === getTodayDateString() ? 'Defaulted to current date' : `Up to: ${toDate} 23:59:59 UTC`}
+                    {toDate ? (toDate === getTodayDateString() ? 'Defaulted to current date' : `Up to: ${toDate} 23:59:59 UTC`) : 'No upper bound'}
                   </div>
                 </div>
               </div>
@@ -494,44 +507,107 @@ export default function SyncCenter({ sfStatus, onNavigateToConnection, onNavigat
             </div>
           )}
 
-          {/* Full Snapshot info notice */}
+          {/* Full Snapshot info notice & WHERE preview */}
           {syncMode === 'full' && (
             <div style={{
               marginBottom: '1.25rem',
-              padding: '0.65rem 0.85rem',
-              borderRadius: 'var(--radius-md)',
-              background: 'rgba(255, 255, 255, 0.02)',
-              border: '1px solid var(--border-subtle)',
-              fontSize: '0.78rem',
-              color: 'var(--text-muted)'
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '0.5rem'
             }}>
-              Full Snapshot syncs all records from Salesforce without date boundaries.
+              <div style={{
+                padding: '0.65rem 0.85rem',
+                borderRadius: 'var(--radius-md)',
+                background: 'rgba(255, 255, 255, 0.02)',
+                border: '1px solid var(--border-subtle)',
+                fontSize: '0.78rem',
+                color: 'var(--text-muted)'
+              }}>
+                Full Snapshot syncs all records from Salesforce without date boundaries.
+              </div>
+              {nameFilter.trim() && (
+                <div style={{
+                  background: 'rgba(234, 179, 8, 0.1)',
+                  padding: '0.45rem 0.65rem',
+                  borderRadius: 'var(--radius-sm)',
+                  border: '1px solid rgba(234, 179, 8, 0.3)',
+                  fontSize: '0.72rem',
+                  color: '#facc15',
+                  fontFamily: 'monospace',
+                  overflowX: 'auto',
+                  whiteSpace: 'nowrap'
+                }}>
+                  <span style={{ fontWeight: 600 }}>WHERE </span>
+                  Name LIKE '%{nameFilter.trim()}%' (Applied to Full Sync)
+                </div>
+              )}
             </div>
           )}
 
           {/* Query Filters Collapsible */}
           <div style={{ marginBottom: '1.5rem' }}>
-            <button
-              type="button"
-              onClick={() => setShowFilters(!showFilters)}
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                width: '100%',
-                background: 'none',
-                border: 'none',
-                color: 'var(--text-muted)',
-                fontSize: '0.82rem',
-                cursor: 'pointer',
-                padding: '0.4rem 0'
-              }}
-            >
-              <span style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                <Filter size={14} /> Additional Filters (SOQL Name)
-              </span>
-              {showFilters ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
-            </button>
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              gap: '0.5rem'
+            }}>
+              <button
+                type="button"
+                onClick={() => setShowFilters(!showFilters)}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.5rem',
+                  background: 'none',
+                  border: 'none',
+                  color: 'var(--text-muted)',
+                  fontSize: '0.82rem',
+                  cursor: 'pointer',
+                  padding: '0.4rem 0',
+                  flex: 1,
+                  textAlign: 'left'
+                }}
+              >
+                <Filter size={14} />
+                <span>Additional Filters (SOQL Name)</span>
+                {nameFilter.trim() && (
+                  <span style={{
+                    fontSize: '0.7rem',
+                    background: 'rgba(234, 179, 8, 0.18)',
+                    color: '#facc15',
+                    border: '1px solid rgba(234, 179, 8, 0.35)',
+                    borderRadius: '4px',
+                    padding: '0.1rem 0.45rem',
+                    fontWeight: 600
+                  }}>
+                    Active: "{nameFilter.trim()}"
+                  </span>
+                )}
+                {showFilters ? <ChevronUp size={14} style={{ marginLeft: 'auto' }} /> : <ChevronDown size={14} style={{ marginLeft: 'auto' }} />}
+              </button>
+
+              {nameFilter.trim() && (
+                <button
+                  type="button"
+                  onClick={() => setNameFilter('')}
+                  style={{
+                    background: 'none',
+                    border: 'none',
+                    color: '#f87171',
+                    fontSize: '0.7rem',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.2rem',
+                    padding: '0.2rem 0.4rem'
+                  }}
+                  title="Clear name filter"
+                >
+                  <X size={12} /> Clear Name
+                </button>
+              )}
+            </div>
 
             {showFilters && (
               <div style={{
@@ -542,15 +618,75 @@ export default function SyncCenter({ sfStatus, onNavigateToConnection, onNavigat
                 borderRadius: 'var(--radius-md)'
               }}>
                 <div className="form-group" style={{ marginBottom: 0 }}>
-                  <label className="form-label">Name contains</label>
-                  <input
-                    type="text"
-                    placeholder="e.g. Acme, John..."
-                    className="form-input"
-                    value={nameFilter}
-                    onChange={(e) => setNameFilter(e.target.value)}
-                  />
+                  <label className="form-label" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <span>Name contains</span>
+                    {nameFilter && (
+                      <button
+                        type="button"
+                        onClick={() => setNameFilter('')}
+                        style={{ background: 'none', border: 'none', color: '#f87171', fontSize: '0.7rem', cursor: 'pointer', padding: 0 }}
+                      >
+                        Clear
+                      </button>
+                    )}
+                  </label>
+                  <div style={{ position: 'relative' }}>
+                    <input
+                      type="text"
+                      placeholder="e.g. Acme, John..."
+                      className="form-input"
+                      value={nameFilter}
+                      onChange={(e) => setNameFilter(e.target.value)}
+                      style={{ paddingRight: nameFilter ? '2rem' : undefined }}
+                    />
+                    {nameFilter && (
+                      <button
+                        type="button"
+                        onClick={() => setNameFilter('')}
+                        style={{
+                          position: 'absolute',
+                          right: '0.5rem',
+                          top: '50%',
+                          transform: 'translateY(-50%)',
+                          background: 'none',
+                          border: 'none',
+                          color: 'var(--text-muted)',
+                          cursor: 'pointer',
+                          padding: '0.2rem'
+                        }}
+                        title="Clear filter"
+                      >
+                        <X size={14} />
+                      </button>
+                    )}
+                  </div>
+                  <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', marginTop: '0.3rem' }}>
+                    Filters all synced objects by <code>Name LIKE '%...%'</code>. Clear this field to fetch all records.
+                  </div>
                 </div>
+              </div>
+            )}
+
+            {/* Quick reset all filters if any custom filter is active */}
+            {(nameFilter.trim() || fromDate) && (
+              <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '0.4rem' }}>
+                <button
+                  type="button"
+                  onClick={() => { setNameFilter(''); setFromDate(''); setToDate(getTodayDateString()); }}
+                  style={{
+                    background: 'none',
+                    border: 'none',
+                    color: 'var(--text-muted)',
+                    fontSize: '0.72rem',
+                    cursor: 'pointer',
+                    padding: '0.1rem 0',
+                    textDecoration: 'underline'
+                  }}
+                  onMouseEnter={(e) => e.currentTarget.style.color = '#f87171'}
+                  onMouseLeave={(e) => e.currentTarget.style.color = 'var(--text-muted)'}
+                >
+                  Reset all filters to default
+                </button>
               </div>
             )}
           </div>
@@ -639,6 +775,40 @@ export default function SyncCenter({ sfStatus, onNavigateToConnection, onNavigat
             )}
           </div>
 
+          {/* Diagnostic Note when 0 records synced */}
+          {syncStatus?.status === 'completed' && syncStatus?.totalRecordsSynced === 0 && (
+            <div style={{
+              marginBottom: '1.25rem',
+              padding: '0.75rem 0.95rem',
+              borderRadius: 'var(--radius-md)',
+              background: 'rgba(234, 179, 8, 0.08)',
+              border: '1px solid rgba(234, 179, 8, 0.25)',
+              fontSize: '0.8rem',
+              color: '#fef08a',
+              display: 'flex',
+              gap: '0.65rem',
+              alignItems: 'flex-start'
+            }}>
+              <AlertCircle size={18} style={{ color: '#facc15', flexShrink: 0, marginTop: '1px' }} />
+              <div style={{ lineHeight: 1.45 }}>
+                <strong style={{ color: '#fff' }}>0 records synced from Salesforce.</strong>
+                {syncStatus?.filters?.nameContains ? (
+                  <div style={{ marginTop: '0.2rem', color: '#fef08a' }}>
+                    A name filter was active: <code>Name LIKE '%{syncStatus.filters.nameContains}%'</code>.
+                  </div>
+                ) : null}
+                {(syncStatus?.filters?.fromDate || syncStatus?.filters?.toDate) ? (
+                  <div style={{ marginTop: '0.2rem', color: '#fef08a' }}>
+                    Query date range: <code>{syncStatus.filters.fromDate || 'Delta'}</code> to <code>{syncStatus.filters.toDate || 'Latest'}</code>.
+                  </div>
+                ) : null}
+                <div style={{ marginTop: '0.35rem', color: '#cbd5e1', fontSize: '0.75rem' }}>
+                  Mock Sandbox records use standard sample names (Acme Corporation, Global Cloud Innovations, Sarah Connor, etc.). Clear the "Name contains" filter to sync all records.
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* Object Health Pills */}
           <div style={{ marginBottom: '1.25rem', flex: 1 }}>
             <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', display: 'block', marginBottom: '0.5rem', textTransform: 'uppercase' }}>
@@ -669,7 +839,7 @@ export default function SyncCenter({ sfStatus, onNavigateToConnection, onNavigat
                       <XCircle size={14} color="#f87171" title={detail?.error || 'Failed'} />
                     ) : isDone ? (
                       <span style={{ color: '#34d399', fontSize: '0.75rem', fontWeight: 600 }}>
-                        ✓ {detail?.recordsUpserted ?? 0}
+                        ✓ {detail?.recordsSynced ?? detail?.recordsUpserted ?? 0}
                       </span>
                     ) : (
                       <span style={{ color: 'var(--text-muted)', fontSize: '0.72rem' }}>Idle</span>

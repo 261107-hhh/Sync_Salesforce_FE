@@ -20,6 +20,7 @@ import {
   ShieldCheck,
   CheckCircle2
 } from 'lucide-react';
+import SyncedByBadge, { parseSyncedBy } from './SyncedByBadge';
 
 export default function DataExplorer({ onOpenDetails, onOpenCreate, onOpenEdit, sfStatus, refreshSignal }) {
   const { activeOrgId, activeOrgName, activeOrgRole } = useAuth();
@@ -43,6 +44,7 @@ export default function DataExplorer({ onOpenDetails, onOpenCreate, onOpenEdit, 
   const [filterStage, setFilterStage] = useState('');
   const [filterStatus, setFilterStatus] = useState('');
   const [filterDepartment, setFilterDepartment] = useState('');
+  const [filterSyncedBy, setFilterSyncedBy] = useState('');
 
   // Debounce search input by 280ms to avoid network storms while typing
   useEffect(() => {
@@ -66,6 +68,7 @@ export default function DataExplorer({ onOpenDetails, onOpenCreate, onOpenEdit, 
     setFilterStage('');
     setFilterStatus('');
     setFilterDepartment('');
+    setFilterSyncedBy('');
   };
 
   useEffect(() => {
@@ -131,6 +134,18 @@ export default function DataExplorer({ onOpenDetails, onOpenCreate, onOpenEdit, 
     }
   };
 
+  // Extract unique users who have synced records in the current view
+  const uniqueSyncedUsers = useMemo(() => {
+    const usersSet = new Set();
+    records.forEach((row) => {
+      const raw = row.synced_by || row.syncedBy;
+      parseSyncedBy(raw).forEach((u) => {
+        usersSet.add(u.raw);
+      });
+    });
+    return Array.from(usersSet).sort();
+  }, [records]);
+
   // Filter records based on active object tab filters
   const filteredRecords = useMemo(() => {
     return records.filter((row) => {
@@ -138,6 +153,13 @@ export default function DataExplorer({ onOpenDetails, onOpenCreate, onOpenEdit, 
       const isCustom = Boolean(row.is_custom_app_created || row.custom_app_created_by);
       if (filterOrigin === 'custom' && !isCustom) return false;
       if (filterOrigin === 'salesforce' && isCustom) return false;
+
+      // Synced By Filter
+      if (filterSyncedBy) {
+        const raw = row.synced_by || row.syncedBy;
+        const users = parseSyncedBy(raw).map((u) => u.raw.toLowerCase());
+        if (!users.includes(filterSyncedBy.toLowerCase())) return false;
+      }
 
       // Account Filters
       if (activeTable === 'Account') {
@@ -164,10 +186,11 @@ export default function DataExplorer({ onOpenDetails, onOpenCreate, onOpenEdit, 
 
       return true;
     });
-  }, [records, filterOrigin, filterIndustry, filterType, filterStage, filterStatus, filterDepartment, activeTable]);
+  }, [records, filterOrigin, filterSyncedBy, filterIndustry, filterType, filterStage, filterStatus, filterDepartment, activeTable]);
 
   const hasActiveFilters = Boolean(
     filterOrigin !== 'all' ||
+    filterSyncedBy ||
     filterIndustry ||
     filterType ||
     filterStage ||
@@ -177,6 +200,7 @@ export default function DataExplorer({ onOpenDetails, onOpenCreate, onOpenEdit, 
 
   const resetFilters = () => {
     setFilterOrigin('all');
+    setFilterSyncedBy('');
     setFilterIndustry('');
     setFilterType('');
     setFilterStage('');
@@ -457,6 +481,24 @@ export default function DataExplorer({ onOpenDetails, onOpenCreate, onOpenEdit, 
             </>
           )}
 
+          {/* Synced By User Filter */}
+          {uniqueSyncedUsers.length > 0 && (
+            <select
+              className="form-select"
+              style={{ width: 'auto', padding: '0.3rem 0.6rem', fontSize: '0.8rem' }}
+              value={filterSyncedBy}
+              onChange={(e) => setFilterSyncedBy(e.target.value)}
+              title="Filter records by user who synced them"
+            >
+              <option value="">All Synced Members ({uniqueSyncedUsers.length})</option>
+              {uniqueSyncedUsers.map((user) => (
+                <option key={user} value={user}>
+                  Synced by: {user.includes('@') ? user.split('@')[0] : user}
+                </option>
+              ))}
+            </select>
+          )}
+
           {/* Reset Filters Button */}
           {hasActiveFilters && (
             <button
@@ -709,8 +751,8 @@ export default function DataExplorer({ onOpenDetails, onOpenCreate, onOpenEdit, 
                       </td>
 
                       {/* SYNCED BY COLUMN */}
-                      <td style={{ fontSize: '0.78rem', color: '#34d399' }}>
-                        {syncedBy ? syncedBy.split('@')[0] : 'System'}
+                      <td>
+                        <SyncedByBadge syncedBy={syncedBy} variant="table" />
                       </td>
 
                       {/* ACCOUNT RELATED PILLS */}
